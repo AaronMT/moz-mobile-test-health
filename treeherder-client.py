@@ -142,7 +142,6 @@ def main():
                         ),
                         headers={
                             'Accept': 'application/vnd.github.groot-preview+json',
-                            'Authorization': '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'
                         }
                     )
                 ) as resp:
