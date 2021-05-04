@@ -1,0 +1,12 @@
+certifi==2020.12.5
+chardet==4.0.0
+colorama==0.4.4
+commonmark==0.9.1
+idna==2.10
+Pygments==2.8.1
+requests==2.25.1
+six==1.15.0
+slack-webhook==1.0.6
+treeherder-client==5.0.0
+typing-extensions==3.7.4.3
+urllib3==1.26.4
