@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 config = configparser.ConfigParser()
 ssl._create_default_https_context = ssl._create_unverified_context
 
-slack = Slack(url=os.environ['SLACK_WEBHOOK'])
+#slack = Slack(url=os.environ['SLACK_WEBHOOK'])
 #slack.post(text="Hello, world.")
 
 
