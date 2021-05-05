@@ -6,8 +6,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       matrix:
         python-version: [3.8]
@@ -24,3 +22,6 @@ jobs:
           pip install -r requirements.txt
       - name: Run script
         run: python treeherder-client.py --config=config.ini && cat output.log
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
