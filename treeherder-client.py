@@ -142,6 +142,9 @@ def main():
                         ),
                         headers={
                             'Accept': 'application/vnd.github.groot-preview+json',
+                            'Authorization': '{0}'.format(
+                                os.environ['GITHUB_TOKEN']
+                            )
                         }
                     )
                 ) as resp:
