@@ -11,6 +11,6 @@ jobs:
         - name: Slack Notify
           uses: rtCamp/action-slack-notify@v2.1.3
           env: 
-            SLACK_WEBBOOK: ${{ secrets.SLACK_WEBHOOK }}
+            SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
             SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
             SLACK_MESSAGE: 'Webhook Test (AaronMT) :rocket:'
