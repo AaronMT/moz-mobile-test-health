@@ -109,7 +109,7 @@ def main():
                         source = resp.read()
                         data = json.loads(source)
                         for key, value in data.items():
-                            _outcome_details = value['testAxises'][0]['details']
+                            _outcome_details = value['testAxises'][0]
                 else:
                     pass
 
@@ -172,7 +172,7 @@ def main():
 
             logger.info(
                 "Duration: {0:.0f} min {1} - {2} - "
-                "{3}/tasks/{4} - {5} - {6} - {7} - {8}\n".format(
+                "{3}/tasks/{4} - {5} - {6} - {7} - {8} - {9}\n".format(
                     (dt_obj_end - dt_obj_start).total_seconds() / 60,
                     _job['who'],
                     _job['result'],
@@ -180,7 +180,8 @@ def main():
                     _job['task_id'],
                     _job['last_modified'],
                     _log[0]['url'],
-                    _outcome_details,
+                    _outcome_details['details'],
+                    _outcome_details['outcome'],
                     revSHA
                 )
             )
