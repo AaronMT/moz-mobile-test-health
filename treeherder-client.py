@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 '''
 Small TreeherderClient for fetching push and
-job metadata from provided configuration and 
-building a sharable dataset: 
+job metadata from provided configuration and
+building a sharable dataset:
 
 Uses:
   - TreeHerder
@@ -20,7 +20,6 @@ import ssl
 import sys
 import urllib.error
 import urllib.request as request
-from slack_webhook import Slack
 from statistics import mean
 from datetime import datetime
 from thclient import TreeherderClient
@@ -31,9 +30,6 @@ logger = logging.getLogger(__name__)
 
 config = configparser.ConfigParser()
 ssl._create_default_https_context = ssl._create_unverified_context
-
-#slack = Slack(url=os.environ['SLACK_WEBHOOK'])
-#slack.post(text="Hello, world.")
 
 
 def parse_args(cmdln_args):
@@ -94,7 +90,7 @@ def main():
         )
         for _job in jobs:
             _outcome_details = None
-            _rev_SHA = None
+            revSHA = None
 
             _log = c.client.get_job_log_url(
                 project=config['project']['repo'],
@@ -103,16 +99,19 @@ def main():
 
             '''TaskCluster'''
             try:
-                with request.urlopen("{0}/{1}/0/public/results/{2}".format(
-                        config['taskcluster']['artifacts'],
-                        _job['task_id'],
-                        config['artifacts']['matrix']
-                    )
-                ) as resp:
-                    source = resp.read()
-                    data = json.loads(source)
-                    for key, value in data.items():
-                        _outcome_details = value['testAxises'][0]['details']
+                if 'ui-test-x86' in config['job']['symbol']:
+                    with request.urlopen("{0}/{1}/0/public/results/{2}".format(
+                            config['taskcluster']['artifacts'],
+                            _job['task_id'],
+                            config['artifacts']['matrix']
+                        )
+                    ) as resp:
+                        source = resp.read()
+                        data = json.loads(source)
+                        for key, value in data.items():
+                            _outcome_details = value['testAxises'][0]['details']
+                else:
+                    pass
 
                 with request.urlopen("{0}/api/queue/v1/task/{1}/".format(
                         config['taskcluster']['host'],
@@ -121,7 +120,7 @@ def main():
                 ) as resp:
                     source = resp.read()
                     data = json.loads(source)
-                    _rev_SHA = data['payload']['env']['MOBILE_HEAD_REV']
+                    revSHA = data['payload']['env']['MOBILE_HEAD_REV']
             except urllib.error.URLError as err:
                 raise SystemExit(err)
 
@@ -138,7 +137,7 @@ def main():
                         url="{0}{1}/commits/{2}/pulls".format(
                             config['project']['url'],
                             config['project']['repo'],
-                            _rev_SHA
+                            revSHA
                         ),
                         headers={
                             'Accept': 'application/vnd.github.groot-preview+json',
@@ -166,7 +165,7 @@ def main():
                 'last_modified': _job['last_modified'],
                 'task_log': _log[0]['url'],
                 'outcome_details': _outcome_details,
-                'revision': _rev_SHA,
+                'revision': revSHA,
                 'pullreq_html_url': data[0]['html_url'],
                 'pullreq_html_title': data[0]['title']
             })
@@ -182,7 +181,7 @@ def main():
                     _job['last_modified'],
                     _log[0]['url'],
                     _outcome_details,
-                    _rev_SHA
+                    revSHA
                 )
             )
 
@@ -195,7 +194,6 @@ def main():
             'outcomeCount': len(outcomes),
             'dataset': dataset
         }
- 
         logger.info("Summary")
         logger.info("Duration average: {0:.0f} minutes".format(summary_set["averageJobDuration"]))
         logger.info("Results: {0} ".format(summary_set['outcomeCount']))
