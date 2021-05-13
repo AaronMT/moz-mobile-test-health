@@ -20,6 +20,7 @@ import ssl
 import sys
 import urllib.error
 import urllib.request as request
+import xmltodict
 from statistics import mean
 from datetime import datetime
 from thclient import TreeherderClient
@@ -90,6 +91,7 @@ def main():
         )
         for _job in jobs:
             _outcome_details = None
+            _test_details = []
             revSHA = None
 
             _log = c.client.get_job_log_url(
@@ -100,6 +102,7 @@ def main():
             '''TaskCluster'''
             try:
                 if 'ui-test-x86' in config['job']['symbol']:
+                    '''Matrix'''
                     with request.urlopen("{0}/{1}/0/public/results/{2}".format(
                             config['taskcluster']['artifacts'],
                             _job['task_id'],
@@ -110,6 +113,23 @@ def main():
                         data = json.loads(source)
                         for key, value in data.items():
                             _outcome_details = value['testAxises'][0]
+
+                    '''JUnitReport'''
+                    with request.urlopen("{0}/{1}/0/public/results/{2}".format(
+                            config['taskcluster']['artifacts'],
+                            _job['task_id'],
+                            config['artifacts']['report']
+                        )
+                    ) as resp:
+                        source = resp.read()
+                        data = xmltodict.parse(source)
+                        root = data['testsuites']
+                        for child in root['testsuite']:
+                            if child['@name'] != 'junit-ignored':
+                                if child['@failures'] == '1':
+                                    _test_details.append(
+                                        child['testcase']['@name']
+                                    )
                 else:
                     pass
 
@@ -167,12 +187,13 @@ def main():
                 'outcome_details': _outcome_details,
                 'revision': revSHA,
                 'pullreq_html_url': data[0]['html_url'],
-                'pullreq_html_title': data[0]['title']
+                'pullreq_html_title': data[0]['title'],
+                'test_details': _test_details
             })
 
             logger.info(
                 "Duration: {0:.0f} min {1} - {2} - "
-                "{3}/tasks/{4} - {5} - {6} - {7} - {8} - {9}\n".format(
+                "{3}/tasks/{4} - {5} - {6} - {7} - {8} - {9} - {10}\n".format(
                     (dt_obj_end - dt_obj_start).total_seconds() / 60,
                     _job['who'],
                     _job['result'],
@@ -182,7 +203,8 @@ def main():
                     _log[0]['url'],
                     _outcome_details['details'],
                     _outcome_details['outcome'],
-                    revSHA
+                    revSHA,
+                    _test_details
                 )
             )
 
