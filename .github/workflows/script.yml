@@ -25,7 +25,7 @@ jobs:
         id: date
         run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
       - name: Run script
-        run: python treeherder-client.py --config='${{ matrix.configuration['config'] }}' | Out-File -FilePath output.md -Encoding utf8 -Append
+        run: python treeherder-client.py --config='${{ matrix.configuration['config'] }}' && cat output.log
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Rename log
