@@ -9,3 +9,4 @@ six==1.15.0
 treeherder-client==5.0.0
 typing-extensions==3.7.4.3
 urllib3==1.26.4
+xmltodict==0.12.0
