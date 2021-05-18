@@ -34,5 +34,5 @@ jobs:
         name: Upload Artifact
         if: ${{ always() }}
         with:
-          name: log
+          name: ${{ steps.date.outputs.date }}.log
           path: ${{ steps.date.outputs.date }}.log
