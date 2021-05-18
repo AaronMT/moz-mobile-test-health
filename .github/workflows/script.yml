@@ -9,6 +9,8 @@ jobs:
     strategy:
       matrix:
         python-version: [3.8]
+        configuration: 
+          - { config: 'config.ini'}
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -23,7 +25,7 @@ jobs:
         id: date
         run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
       - name: Run script
-        run: python treeherder-client.py --config=config.ini && cat output.log
+        run: python treeherder-client.py --config='${{ matrix.configuration['config'] }}' && cat output.log
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Rename log
