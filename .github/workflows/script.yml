@@ -29,11 +29,18 @@ jobs:
           python treeherder-client.py --config='${{ matrix.configuration['config'] }}' && cat output.log
           echo "::endgroup::"
           mv output.log ${{ steps.date.outputs.date }}.log
+          mv output.json ${{ steps.date.outputs.date }}.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v2
-        name: Upload Artifact
+        name: Upload Artifact (log)
         if: ${{ always() }}
         with:
           name: ${{ steps.date.outputs.date }}.log
           path: ${{ steps.date.outputs.date }}.log
+      - uses: actions/upload-artifact@v2
+        name: Upload Artifact (json)
+        if: ${{ always() }}
+        with:
+          name: ${{ steps.date.outputs.date }}.json
+          path: ${{ steps.date.outputs.date }}.json

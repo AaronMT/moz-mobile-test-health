@@ -208,15 +208,21 @@ def main():
     if durations and outcomes and dataset:
 
         summary_set = {
+            'datasetResults': dataset,
             'jobSymbol': config['job']['symbol'],
             'jobResult': config['job']['result'],
             'averageJobDuration': round(mean(durations), 2),
             'outcomeCount': len(outcomes),
-            'dataset': dataset
         }
         logger.info("Summary")
         logger.info("Duration average: {0:.0f} minutes".format(summary_set["averageJobDuration"]))
         logger.info("Results: {0} ".format(summary_set['outcomeCount']))
+
+        try: 
+            with open('output.json', 'w') as outfile:
+                json.dump(summary_set, outfile, indent=4)
+        except OSError as err:
+            raise SystemExit(err)
 
 
 if __name__ == "__main__":
