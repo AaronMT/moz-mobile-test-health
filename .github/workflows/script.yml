@@ -28,8 +28,8 @@ jobs:
           echo "::group::Results"
           python treeherder-client.py --config='${{ matrix.configuration['config'] }}' && cat output.log
           echo "::endgroup::"
-          cp output.log ${{ steps.date.outputs.date }}.log
-          cp output.json ${{ steps.date.outputs.date }}.json
+          mv output.log ${{ steps.date.outputs.date }}.log
+          mv output.json ${{ steps.date.outputs.date }}.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v2
@@ -44,11 +44,3 @@ jobs:
         with:
           name: ${{ steps.date.outputs.date }}.json
           path: ${{ steps.date.outputs.date }}.json
-      - name: Read Properties
-        id: read_property
-        uses:  ashley-taylor/read-json-property-action@v1.0
-        with:
-          path: output.json
-          property: outcomeCount
-      - name: Echo Property
-        run: echo ${{ steps.read_property.outputs.value }}
