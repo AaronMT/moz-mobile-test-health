@@ -1,14 +1,13 @@
 name: "Run Script"
 
-on:
-  workflow_dispatch:
+on: [push, workflow_dispatch]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.9]
         configuration: 
           - { config: 'config.ini'}
     steps:
