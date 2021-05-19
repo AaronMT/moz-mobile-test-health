@@ -26,12 +26,9 @@ jobs:
       - name: Run script
         run: |
           python treeherder-client.py --config='${{ matrix.configuration['config'] }}' && cat output.log
-          echo "LOG=$(cat output.log)" >> $GITHUB_ENV
           mv output.log ${{ steps.date.outputs.date }}.log
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Show log
-        run: echo "${{ env.LOG }}"
       - uses: actions/upload-artifact@v2
         name: Upload Artifact
         if: ${{ always() }}
