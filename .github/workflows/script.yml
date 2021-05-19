@@ -24,11 +24,11 @@ jobs:
         id: date
         run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
       - name: Run script
-        run: python treeherder-client.py --config='${{ matrix.configuration['config'] }}' && cat output.log
+        run: |
+          python treeherder-client.py --config='${{ matrix.configuration['config'] }}' && cat output.log
+          mv output.log ${{ steps.date.outputs.date }}.log
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Rename log
-        run: mv output.log ${{ steps.date.outputs.date }}.log
       - uses: actions/upload-artifact@v2
         name: Upload Artifact
         if: ${{ always() }}
