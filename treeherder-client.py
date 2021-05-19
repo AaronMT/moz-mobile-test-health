@@ -68,8 +68,8 @@ def main():
     except requests.exceptions.HTTPError as err:
         raise SystemExit(err)
 
-    logger.info("Fetching push data from TreeHerder..\n")
-    logger.info(
+    print("Fetching push data from TreeHerder..\n")
+    print(
         "Feching recent {0} in {1}\n".format(
             config["job"]["result"],
             config["job"]["symbol"]
@@ -167,11 +167,6 @@ def main():
                 ) as resp:
                     source = resp.read()
                     data = json.loads(source)
-                    logger.info("Associated pull request: {0} - {1}".format(
-                            data[0]['html_url'],
-                            data[0]['title']
-                        )
-                    )
             except urllib.error.URLError as err:
                 raise SystemExit(err)
 
@@ -193,7 +188,7 @@ def main():
 
             logger.info(
                 "Duration: {0:.0f} min {1} - {2} - "
-                "{3}/tasks/{4} - {5} - {6} - {7} - {8} - {9} - {10}\n".format(
+                "{3}/tasks/{4} - {5} - {6} - {7} - {8} - {9} - {10} - {11} - {12}\n".format(
                     (dt_obj_end - dt_obj_start).total_seconds() / 60,
                     _job['who'],
                     _job['result'],
@@ -204,7 +199,9 @@ def main():
                     _outcome_details['details'],
                     _outcome_details['outcome'],
                     revSHA,
-                    _test_details
+                    _test_details,
+                    data[0]['html_url'],
+                    data[0]['title']
                 )
             )
 
