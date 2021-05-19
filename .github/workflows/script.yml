@@ -25,7 +25,9 @@ jobs:
         run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
       - name: Run script
         run: |
+          echo "::group::Results"
           python treeherder-client.py --config='${{ matrix.configuration['config'] }}' && cat output.log
+          echo "::endgroup::"
           mv output.log ${{ steps.date.outputs.date }}.log
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
