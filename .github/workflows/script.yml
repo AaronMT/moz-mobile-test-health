@@ -36,19 +36,3 @@ jobs:
         with:
           name: ${{ steps.date.outputs.date }}.json
           path: ${{ steps.date.outputs.date }}.json
-      - name: Get JSON Property
-        id: test
-        uses: notiz-dev/github-action-json-property@release
-        with:
-          path: 'output.json'
-          prop_path: 'jobSymbol'
-      - name: Get Artifact URL
-        run: |
-          ARTIFACTS="https://api.github.com/repos/aaronmt/moz-mobile-test-health/actions/artifacts"
-          echo "URL=$(curl -u admin:${{ secrets.GITHUB_TOKEN }} $ARTIFACTS | jq 'first(.artifacts[].url)')" >> $GITHUB_ENV
-      - name: Slack Notify
-        uses: rtCamp/action-slack-notify@v2.1.3
-        env: 
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
-          SLACK_MESSAGE: 'JSON URL: ${{env.URL}}'

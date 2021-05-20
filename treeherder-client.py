@@ -67,8 +67,12 @@ def main():
         )
     except requests.exceptions.HTTPError as err:
         raise SystemExit(err)
+    
+    durations = []
+    outcomes = []
+    dataset = []
 
-    print("Fetching push data from TreeHerder..\n")
+    print("Fetching push data from TreeHerder..")
     print(
         "Feching recent {0} in {1} ({2} pushes)\n".format(
             config['job']['result'],
@@ -81,10 +85,6 @@ def main():
         open('output.json', 'w')
     except OSError as err:
         raise SystemExit(err)
-
-    durations = []
-    outcomes = []
-    dataset = []
 
     for _push in sorted(p, key=lambda push: push['id']):
         jobs = c.client.get_jobs(
@@ -225,10 +225,10 @@ def main():
         logger.info("Results: {0} ".format(summary_set['outcomeCount']))
         print("Output written to LOG file", end='\n')
 
-        try: 
+        try:
             with open('output.json', 'w') as outfile:
                 json.dump(summary_set, outfile, indent=4)
-                print("Output written to JSON file", end='\n')
+                print("Output written to JSON file\n", end='\n')
         except OSError as err:
             raise SystemExit(err)
     else:
