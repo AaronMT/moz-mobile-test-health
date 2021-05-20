@@ -34,5 +34,15 @@ jobs:
         name: Upload Artifact (json)
         if: ${{ always() }}
         with:
-          name: ${{ steps.date.outputs.date }}.json
+          name: ${{ steps.date.outputs.date }}
           path: ${{ steps.date.outputs.date }}.json
+      - uses: google-github-actions/setup-gcloud@master
+        name: Authenticate Google Cloud
+        with:
+          service_account_key: ${{ secrets.GCP_CREDENTIALS }}
+          export_default_credentials: true
+      - uses: google-github-actions/upload-cloud-storage@main
+        name: Upload Artifact (json) to Google Cloud Storage
+        with: 
+          path: ${{ steps.date.outputs.date }}.json
+          destination: mobile-reports/public/moz-mobile-health/${{ steps.date.outputs.date }}
