@@ -27,16 +27,9 @@ jobs:
         run: |
           python treeherder-client.py --config='${{ matrix.configuration['config'] }}'
           cat output.log
-          cp output.log ${{ steps.date.outputs.date }}.log
           cp output.json ${{ steps.date.outputs.date }}.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/upload-artifact@v2
-        name: Upload Artifact (log)
-        if: ${{ always() }}
-        with:
-          name: ${{ steps.date.outputs.date }}.log
-          path: ${{ steps.date.outputs.date }}.log
       - uses: actions/upload-artifact@v2
         name: Upload Artifact (json)
         if: ${{ always() }}
@@ -48,7 +41,7 @@ jobs:
         uses: notiz-dev/github-action-json-property@release
         with:
           path: 'output.json'
-          prop_path: 'outcomeCount'
+          prop_path: 'jobSymbol'
       - run: echo ${{steps.test.outputs.prop}}
       - name: Slack Notify
         uses: rtCamp/action-slack-notify@v2.1.3
