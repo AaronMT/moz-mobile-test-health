@@ -70,11 +70,17 @@ def main():
 
     print("Fetching push data from TreeHerder..\n")
     print(
-        "Feching recent {0} in {1}\n".format(
-            config["job"]["result"],
-            config["job"]["symbol"]
+        "Feching recent {0} in {1} ({2} pushes)\n".format(
+            config['job']['result'],
+            config['job']['symbol'],
+            config['pushes']['count']
         )
     )
+
+    try:
+        open('output.json', 'w')
+    except OSError as err:
+        raise SystemExit(err)
 
     durations = []
     outcomes = []
@@ -217,12 +223,16 @@ def main():
         logger.info("Summary")
         logger.info("Duration average: {0:.0f} minutes".format(summary_set["averageJobDuration"]))
         logger.info("Results: {0} ".format(summary_set['outcomeCount']))
+        print("Output written to LOG file", end='\n')
 
         try: 
             with open('output.json', 'w') as outfile:
                 json.dump(summary_set, outfile, indent=4)
+                print("Output written to JSON file", end='\n')
         except OSError as err:
             raise SystemExit(err)
+    else:
+        print("No results found with provided config.")
 
 
 if __name__ == "__main__":
