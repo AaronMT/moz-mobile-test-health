@@ -22,7 +22,9 @@ jobs:
           pip install -r requirements.txt
       - name: Set current date as env variable
         id: date
-        run: echo "::set-output name=date::$(date +'%Y_%m_%d_%I_%M_%p')"
+        run: |
+          echo "::set-output name=date::$(date +'%Y_%m_%d_%I_%M_%p')"
+          echo "::set-output name=day::$(date +'%Y-%m-%d')"
       - name: Run script
         run: |
           python treeherder-client.py --config='${{ matrix.configuration['config'] }}'
@@ -45,4 +47,4 @@ jobs:
         name: Upload Artifact (json) to Google Cloud Storage
         with: 
           path: ${{ steps.date.outputs.date }}.json
-          destination: mobile-reports/public/moz-mobile-health/${{ steps.date.outputs.date }}
+          destination: mobile-reports/public/moz-mobile-health/${{ steps.date.outputs.day }}
