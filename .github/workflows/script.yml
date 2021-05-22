@@ -22,7 +22,7 @@ jobs:
           pip install -r requirements.txt
       - name: Set current date as env variable
         id: date
-        run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+        run: echo "::set-output name=date::$(date +'%Y_%m_%d_%I_%M_%p')"
       - name: Run script
         run: |
           python treeherder-client.py --config='${{ matrix.configuration['config'] }}'
