@@ -72,9 +72,9 @@ def main():
     outcomes = []
     dataset = []
 
-    print("Fetching push data from TreeHerder..")
+    print('Fetched Push data from TreeHerder..')
     print(
-        "Feching recent {0} in {1} ({2} pushes)\n".format(
+        'Fetching recent {0} in {1} ({2} pushes)\n'.format(
             config['job']['result'],
             config['job']['symbol'],
             config['pushes']['count']
@@ -109,7 +109,7 @@ def main():
             try:
                 if 'ui-test-x86' in config['job']['symbol']:
                     '''Matrix'''
-                    with request.urlopen("{0}/{1}/0/public/results/{2}".format(
+                    with request.urlopen('{0}/{1}/0/public/results/{2}'.format(
                             config['taskcluster']['artifacts'],
                             _job['task_id'],
                             config['artifacts']['matrix']
@@ -121,7 +121,7 @@ def main():
                             _outcome_details = value['testAxises'][0]
 
                     '''JUnitReport'''
-                    with request.urlopen("{0}/{1}/0/public/results/{2}".format(
+                    with request.urlopen('{0}/{1}/0/public/results/{2}'.format(
                             config['taskcluster']['artifacts'],
                             _job['task_id'],
                             config['artifacts']['report']
@@ -151,7 +151,7 @@ def main():
                 else:
                     pass
 
-                with request.urlopen("{0}/api/queue/v1/task/{1}/".format(
+                with request.urlopen('{0}/api/queue/v1/task/{1}/'.format(
                         config['taskcluster']['host'],
                         _job['task_id']
                     )
@@ -172,7 +172,7 @@ def main():
             try:
                 with request.urlopen(
                     request.Request(
-                        url="{0}{1}/commits/{2}/pulls".format(
+                        url='{0}{1}/commits/{2}/pulls'.format(
                             config['project']['url'],
                             config['project']['repo'],
                             revSHA
@@ -186,31 +186,31 @@ def main():
                     )
                 ) as resp:
                     source = resp.read()
-                    data = json.loads(source)
+                    _github_data = json.loads(source)
             except urllib.error.URLError as err:
                 raise SystemExit(err)
 
             dataset.append({
                 'push_id': _push['id'],
                 'task_id': _job['task_id'],
-                'duration': "{0:.0f}".format(
+                'duration': '{0:.0f}'.format(
                     (dt_obj_end - dt_obj_start).total_seconds() / 60
                 ),
                 'author': _job['who'],
                 'result': _job['result'],
-                'task_html_url': config['taskcluster']['host'] + "/tasks/" + _job['task_id'],
+                'task_html_url': config['taskcluster']['host'] + '/tasks/' + _job['task_id'],
                 'last_modified': _job['last_modified'],
                 'task_log': _log[0]['url'],
                 'outcome_details': _outcome_details,
                 'revision': revSHA,
-                'pullreq_html_url': data[0]['html_url'],
-                'pullreq_html_title': data[0]['title'],
+                'pullreq_html_url': _github_data[0]['html_url'],
+                'pullreq_html_title': _github_data[0]['title'],
                 'test_details': _test_details
             })
 
             logger.info(
-                "Duration: {0:.0f} min {1} - {2} - "
-                "{3}/tasks/{4} - {5} - {6} - {7} - {8} - {9} - {10} - {11} - {12}\n".format(
+                'Duration: {0:.0f} min {1} - {2} - '
+                '{3}/tasks/{4} - {5} - {6} - {7} - {8} - {9} - {10} - {11} - {12}\n'.format(
                     (dt_obj_end - dt_obj_start).total_seconds() / 60,
                     _job['who'],
                     _job['result'],
@@ -222,8 +222,8 @@ def main():
                     _outcome_details['outcome'],
                     revSHA,
                     _test_details,
-                    data[0]['html_url'],
-                    data[0]['title']
+                    _github_data[0]['html_url'],
+                    _github_data[0]['title']
                 )
             )
 
@@ -237,23 +237,23 @@ def main():
             'averageJobDuration': round(mean(durations), 2),
             'outcomeCount': len(outcomes)
         }
-        logger.info("Summary")
-        logger.info("Duration average: {0:.0f} minutes".format(
-                summary_set["averageJobDuration"]
+        logger.info('Summary')
+        logger.info('Duration average: {0:.0f} minutes'.format(
+                summary_set['averageJobDuration']
             )
         )
-        logger.info("Results: {0} ".format(summary_set['outcomeCount']))
-        print("Output written to LOG file", end='\n')
+        logger.info('Results: {0} '.format(summary_set['outcomeCount']))
+        print('Output written to LOG file', end='\n')
 
         try:
             with open('output.json', 'w') as outfile:
                 json.dump(summary_set, outfile, indent=4)
-                print("Output written to JSON file\n", end='\n')
+                print('Output written to JSON file\n', end='\n')
         except OSError as err:
             raise SystemExit(err)
     else:
-        print("No results found with provided config.")
+        print('No results found with provided config.')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
