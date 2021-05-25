@@ -67,7 +67,7 @@ def main():
         )
     except requests.exceptions.HTTPError as err:
         raise SystemExit(err)
-    
+
     durations = []
     outcomes = []
     dataset = []
@@ -134,7 +134,19 @@ def main():
                             if child['@name'] != 'junit-ignored':
                                 if child['@failures'] == '1':
                                     _test_details.append(
-                                        child['testcase']['@name']
+                                        {
+                                            'test_name':
+                                                child['testcase']['@name'],
+                                            'test_result': 'failure'
+                                        }
+                                    )
+                                elif child['@flakes'] == '1':
+                                    _test_details.append(
+                                        {
+                                            'test_name':
+                                                child['testcase']['@name'],
+                                            'test_result': 'flaky'
+                                        }
                                     )
                 else:
                     pass
@@ -166,8 +178,10 @@ def main():
                             revSHA
                         ),
                         headers={
-                            'Accept': 'application/vnd.github.groot-preview+json',
-                            'Authorization': 'token %s' % os.environ['GITHUB_TOKEN']
+                            'Accept':
+                                'application/vnd.github.groot-preview+json',
+                            'Authorization':
+                                'token %s' % os.environ['GITHUB_TOKEN']
                         }
                     )
                 ) as resp:
@@ -179,7 +193,9 @@ def main():
             dataset.append({
                 'push_id': _push['id'],
                 'task_id': _job['task_id'],
-                'duration': "{0:.0f}".format((dt_obj_end - dt_obj_start).total_seconds() / 60),
+                'duration': "{0:.0f}".format(
+                    (dt_obj_end - dt_obj_start).total_seconds() / 60
+                ),
                 'author': _job['who'],
                 'result': _job['result'],
                 'task_html_url': config['taskcluster']['host'] + "/tasks/" + _job['task_id'],
@@ -215,13 +231,17 @@ def main():
 
         summary_set = {
             'datasetResults': dataset,
+            'repo': config['project']['repo'],
             'jobSymbol': config['job']['symbol'],
             'jobResult': config['job']['result'],
             'averageJobDuration': round(mean(durations), 2),
-            'outcomeCount': len(outcomes),
+            'outcomeCount': len(outcomes)
         }
         logger.info("Summary")
-        logger.info("Duration average: {0:.0f} minutes".format(summary_set["averageJobDuration"]))
+        logger.info("Duration average: {0:.0f} minutes".format(
+                summary_set["averageJobDuration"]
+            )
+        )
         logger.info("Results: {0} ".format(summary_set['outcomeCount']))
         print("Output written to LOG file", end='\n')
 
