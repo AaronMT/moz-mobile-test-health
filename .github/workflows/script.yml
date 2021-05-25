@@ -36,7 +36,7 @@ jobs:
         name: Upload Artifact (json)
         if: ${{ always() }}
         with:
-          name: ${{ steps.date.outputs.date }}
+          name: JSON (${{ steps.date.outputs.date }}.json) [zip]
           path: ${{ steps.date.outputs.date }}.json
       - uses: google-github-actions/setup-gcloud@master
         name: Authenticate Google Cloud
