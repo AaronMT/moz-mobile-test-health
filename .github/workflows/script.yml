@@ -48,3 +48,6 @@ jobs:
         with: 
           path: ${{ steps.date.outputs.date }}.json
           destination: mobile-reports/public/moz-mobile-health/${{ steps.date.outputs.day }}
+      - name: Show public URL
+        run: |
+          echo "Public URL: https://storage.googleapis.com/mobile-reports/public/moz-mobile-health/${{ steps.date.outputs.day }}/${{ steps.date.outputs.date}}.json"
