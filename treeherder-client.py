@@ -81,11 +81,6 @@ def main():
         )
     )
 
-    try:
-        open('output.json', 'w')
-    except OSError as err:
-        raise SystemExit(err)
-
     for _push in sorted(p, key=lambda push: push['id']):
         jobs = c.client.get_jobs(
             config['project']['repo'],
@@ -135,17 +130,17 @@ def main():
                                 if child['@failures'] == '1':
                                     _test_details.append(
                                         {
-                                            'test_name':
+                                            'name':
                                                 child['testcase']['@name'],
-                                            'test_result': 'failure'
+                                            'result': 'failure'
                                         }
                                     )
                                 elif child['@flakes'] == '1':
                                     _test_details.append(
                                         {
-                                            'test_name':
+                                            'name':
                                                 child['testcase']['@name'],
-                                            'test_result': 'flaky'
+                                            'result': 'flaky'
                                         }
                                     )
                 else:
@@ -230,19 +225,19 @@ def main():
     if durations and outcomes and dataset:
 
         summary_set = {
-            'datasetResults': dataset,
+            'dataset_results': dataset,
             'repo': config['project']['repo'],
-            'jobSymbol': config['job']['symbol'],
-            'jobResult': config['job']['result'],
-            'averageJobDuration': round(mean(durations), 2),
-            'outcomeCount': len(outcomes)
+            'job_symbol': config['job']['symbol'],
+            'job_result': config['job']['result'],
+            'average_job_duration': round(mean(durations), 2),
+            'outcome_count': len(outcomes)
         }
         logger.info('Summary')
         logger.info('Duration average: {0:.0f} minutes'.format(
-                summary_set['averageJobDuration']
+                summary_set['average_job_duration']
             )
         )
-        logger.info('Results: {0} '.format(summary_set['outcomeCount']))
+        logger.info('Results: {0} '.format(summary_set['outcome_count']))
         print('Output written to LOG file', end='\n')
 
         try:
