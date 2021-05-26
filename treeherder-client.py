@@ -194,7 +194,9 @@ def main():
                 ),
                 'author': _job['who'],
                 'result': _job['result'],
-                'task_html_url': config['taskcluster']['host'] + '/tasks/' + _job['task_id'],
+                'task_html_url': '{0}'.format(
+                    config['taskcluster']['host'] + '/tasks/' + _job['task_id']
+                ),
                 'last_modified': _job['last_modified'],
                 'task_log': _log[0]['url'],
                 'outcome_details': _outcome_details,
@@ -206,7 +208,8 @@ def main():
 
             logger.info(
                 'Duration: {0:.0f} min {1} - {2} - '
-                '{3}/tasks/{4} - {5} - {6} - {7} - {8} - {9} - {10} - {11} - {12}\n'.format(
+                '{3}/tasks/{4} - {5} - {6} - {7} - '
+                '{8} - {9} - {10} - {11} - {12}\n'.format(
                     (dt_obj_end - dt_obj_start).total_seconds() / 60,
                     _job['who'],
                     _job['result'],
