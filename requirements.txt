@@ -2,11 +2,13 @@ certifi==2020.12.5
 chardet==4.0.0
 colorama==0.4.4
 commonmark==0.9.1
+crudini==0.9.3
 idna==2.10
-Pygments==2.8.1
+iniparse==0.5
+Pygments==2.9.0
 requests==2.25.1
-six==1.15.0
+six==1.16.0
 treeherder-client==5.0.0
-typing-extensions==3.7.4.3
-urllib3==1.26.4
+typing-extensions==3.10.0.0
+urllib3==1.26.5
 xmltodict==0.12.0

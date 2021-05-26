@@ -131,16 +131,14 @@ def main():
                                 if child['@failures'] == '1':
                                     _test_details.append(
                                         {
-                                            'name':
-                                                child['testcase']['@name'],
+                                            'name': child['testcase']['@name'],
                                             'result': 'failure'
                                         }
                                     )
                                 elif child['@flakes'] == '1':
                                     _test_details.append(
                                         {
-                                            'name':
-                                                child['testcase']['@name'],
+                                            'name': child['testcase']['@name'],
                                             'result': 'flaky'
                                         }
                                     )
