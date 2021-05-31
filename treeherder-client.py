@@ -87,7 +87,8 @@ def main():
             tier=config['job']['tier'],
             job_type_symbol=config['job']['symbol'],
             result=config['job']['result'],
-            job_group_symbol=config['job']['group_symbol']
+            job_group_symbol=config['job']['group_symbol'],
+            who=config['filters']['author']
         )
 
         for _job in jobs:
