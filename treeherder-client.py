@@ -92,7 +92,7 @@ def main():
         )
 
         for _job in jobs:
-            _outcome_details = None
+            _matrix_outcome_details = None
             _test_details = []
             _revSHA = None
 
@@ -115,7 +115,7 @@ def main():
                         source = resp.read()
                         data = json.loads(source)
                         for key, value in data.items():
-                            _outcome_details = value['testAxises'][0]
+                            _matrix_outcome_details = value['testAxises'][0]
 
                     # JUnitReport
                     with request.urlopen('{0}/{1}/0/public/results/{2}'.format(
@@ -143,6 +143,8 @@ def main():
                                             'result': 'flaky'
                                         }
                                     )
+                                else:
+                                    pass
                 else:
                     pass
 
@@ -156,12 +158,6 @@ def main():
                     _revSHA = data['payload']['env']['MOBILE_HEAD_REV']
             except urllib.error.URLError as err:
                 raise SystemExit(err)
-
-            dt_obj_start = datetime.fromtimestamp(_job['start_timestamp'])
-            dt_obj_end = datetime.fromtimestamp(_job['end_timestamp'])
-
-            durations.append((dt_obj_end - dt_obj_start).total_seconds() / 60)
-            outcomes.append(_job)
 
             # Github
             try:
@@ -185,6 +181,11 @@ def main():
             except urllib.error.URLError as err:
                 raise SystemExit(err)
 
+            dt_obj_start = datetime.fromtimestamp(_job['start_timestamp'])
+            dt_obj_end = datetime.fromtimestamp(_job['end_timestamp'])
+
+            durations.append((dt_obj_end - dt_obj_start).total_seconds() / 60)
+            outcomes.append(_job)
             dataset.append({
                 'push_id': _push['id'],
                 'task_id': _job['task_id'],
@@ -198,7 +199,7 @@ def main():
                 ),
                 'last_modified': _job['last_modified'],
                 'task_log': _log[0]['url'],
-                'outcome_details': _outcome_details,
+                'outcome_details': _matrix_outcome_details,
                 'revision': _revSHA,
                 'pullreq_html_url': _github_data[0]['html_url'],
                 'pullreq_html_title': _github_data[0]['title'],
@@ -216,8 +217,10 @@ def main():
                     _job['task_id'],
                     _job['last_modified'],
                     _log[0]['url'],
-                    _outcome_details['details'],
-                    _outcome_details['outcome'],
+                    _matrix_outcome_details['details']
+                    if _matrix_outcome_details else None,
+                    _matrix_outcome_details['outcome']
+                    if _matrix_outcome_details else None,
                     _revSHA,
                     _test_details,
                     _github_data[0]['html_url'],
