@@ -104,7 +104,7 @@ def main():
             # TaskCluster
             try:
                 # Dependent on public artifact visibility
-                if 'ui-test-x86' in config['job']['symbol']:
+                if 'ui-' in config['job']['symbol']:
                     # Matrix
                     with request.urlopen('{0}/{1}/0/public/results/{2}'.format(
                             config['taskcluster']['artifacts'],
@@ -203,7 +203,7 @@ def main():
                 'revision': _revSHA,
                 'pullreq_html_url': _github_data[0]['html_url'],
                 'pullreq_html_title': _github_data[0]['title'],
-                'test_details': _test_details
+                'problem_test_details': _test_details
             })
 
             logger.info(
