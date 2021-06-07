@@ -16,6 +16,7 @@ import json
 import logging
 import os
 import requests
+import re
 import ssl
 import sys
 import urllib.error
@@ -104,7 +105,7 @@ def main():
             # TaskCluster
             try:
                 # Dependent on public artifact visibility
-                if 'ui-' in config['job']['symbol']:
+                if (re.compile("^(ui-){1}.*")).search(config['job']['symbol']):
                     # Matrix
                     with request.urlopen('{0}/{1}/0/public/results/{2}'.format(
                             config['taskcluster']['artifacts'],
