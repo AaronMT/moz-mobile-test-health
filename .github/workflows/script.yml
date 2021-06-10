@@ -26,15 +26,16 @@ jobs:
           echo "::set-output name=date::$(date +'%Y_%m_%d_%I_%M_%p')"
           echo "::set-output name=day::$(date +'%Y-%m-%d')"
       - name: Run script
+        id: runClient
         run: |
           python treeherder-client.py --config='${{ matrix.configuration['config'] }}'
-          cat output.log
-          cp output.json ${{ steps.date.outputs.date }}.json
+          [ ! -e output.log ] || cat output.log
+          [ ! -e output.json ] || cp output.json ${{ steps.date.outputs.date }}.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v2
         name: Upload Artifact (json)
-        if: ${{ always() }}
+        if: hashFiles('output.json') != ''
         with:
           name: JSON (${{ steps.date.outputs.date }}.json) [zip]
           path: ${{ steps.date.outputs.date }}.json
@@ -44,10 +45,12 @@ jobs:
           service_account_key: ${{ secrets.GCP_CREDENTIALS }}
           export_default_credentials: true
       - uses: google-github-actions/upload-cloud-storage@main
+        if: hashFiles('output.json') != ''
         name: Upload Artifact (json) to Google Cloud Storage
         with: 
           path: ${{ steps.date.outputs.date }}.json
           destination: mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}
       - name: Show public URL
+        if: hashFiles('output.json') != ''
         run: |
           echo "Public URL: https://storage.googleapis.com/mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}/${{ steps.date.outputs.date}}.json"
