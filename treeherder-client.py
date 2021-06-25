@@ -101,6 +101,8 @@ def main():
                 project=config['project']['repo'],
                 job_id=_job['id']
             )
+            for _log_url in _log:
+                _log = _log_url['url']
 
             # TaskCluster
             try:
@@ -149,6 +151,7 @@ def main():
                 else:
                     pass
 
+                # TaskCluster: payload mobile revision
                 with request.urlopen('{0}/api/queue/v1/task/{1}/'.format(
                         config['taskcluster']['host'],
                         _job['task_id']
@@ -179,6 +182,9 @@ def main():
                 ) as resp:
                     source = resp.read()
                     _github_data = json.loads(source)
+                    for _data in _github_data:
+                        _github_data = _data
+
             except urllib.error.URLError as err:
                 raise SystemExit(err)
 
@@ -199,11 +205,11 @@ def main():
                     config['taskcluster']['host'] + '/tasks/' + _job['task_id']
                 ),
                 'last_modified': _job['last_modified'],
-                'task_log': _log[0]['url'],
+                'task_log': _log,
                 'outcome_details': _matrix_outcome_details,
                 'revision': _revSHA,
-                'pullreq_html_url': _github_data[0]['html_url'],
-                'pullreq_html_title': _github_data[0]['title'],
+                'pullreq_html_url': _github_data['html_url'],
+                'pullreq_html_title': _github_data['title'],
                 'problem_test_details': _test_details
             })
 
@@ -217,15 +223,15 @@ def main():
                     config['taskcluster']['host'],
                     _job['task_id'],
                     _job['last_modified'],
-                    _log[0]['url'],
+                    _log,
                     _matrix_outcome_details['details']
                     if _matrix_outcome_details else None,
                     _matrix_outcome_details['outcome']
                     if _matrix_outcome_details else None,
                     _revSHA,
                     _test_details,
-                    _github_data[0]['html_url'],
-                    _github_data[0]['title']
+                    _github_data['html_url'],
+                    _github_data['title']
                 )
             )
 
