@@ -83,7 +83,7 @@ def main():
 
     for _push in sorted(p, key=lambda push: push['id']):
         jobs = c.client.get_jobs(
-            config['project']['repo'],
+            project=config['project']['repo'],
             push_id=_push['id'],
             tier=config['job']['tier'],
             job_type_symbol=config['job']['symbol'],
