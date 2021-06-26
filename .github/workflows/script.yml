@@ -31,6 +31,8 @@ jobs:
           python treeherder-client.py --config='${{ matrix.configuration['config'] }}'
           [ ! -e output.log ] || cat output.log
           [ ! -e output.json ] || cp output.json ${{ steps.date.outputs.date }}.json
+          echo ${{ env.GITHUB_REF }}
+          echo ${{ env.GITHUB_REPOSITORy }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v2
