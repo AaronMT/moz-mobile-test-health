@@ -1,4 +1,9 @@
 #! /usr/bin/env python
+
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 '''
 Small TreeherderClient for fetching push and
 job metadata from provided configuration and
@@ -242,12 +247,12 @@ def main():
             'repo': config['project']['repo'],
             'job_symbol': config['job']['symbol'],
             'job_result': config['job']['result'],
-            'average_job_duration': round(mean(durations), 2),
+            'job_duration_avg': round(mean(durations), 2),
             'outcome_count': len(outcomes)
         }
         logger.info('Summary')
         logger.info('Duration average: {0:.0f} minutes'.format(
-                summary_set['average_job_duration']
+                summary_set['job_duration_avg']
             )
         )
         logger.info('Results: {0} '.format(summary_set['outcome_count']))
