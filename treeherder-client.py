@@ -114,9 +114,11 @@ def main():
                 # Dependent on public artifact visibility
                 if (re.compile("^(ui-){1}.*")).search(config['job']['symbol']):
                     # Matrix
-                    with request.urlopen('{0}/{1}/0/public/results/{2}'.format(
+                    with request.urlopen(
+                        '{0}/{1}/{2}/public/results/{3}'.format(
                             config['taskcluster']['artifacts'],
                             _job['task_id'],
+                            _job['retry_id'],
                             config['artifacts']['matrix']
                         )
                     ) as resp:
@@ -126,9 +128,11 @@ def main():
                             _matrix_outcome_details = value['testAxises'][0]
 
                     # JUnitReport
-                    with request.urlopen('{0}/{1}/0/public/results/{2}'.format(
+                    with request.urlopen(
+                        '{0}/{1}/{2}/public/results/{3}'.format(
                             config['taskcluster']['artifacts'],
                             _job['task_id'],
+                            _job['retry_id'],
                             config['artifacts']['report']
                         )
                     ) as resp:
