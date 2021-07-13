@@ -125,6 +125,11 @@ def main():
                         source = resp.read()
                         data = json.loads(source)
                         for key, value in data.items():
+                            _matrix_general_details = {
+                                "webLink": value[
+                                    'webLinkWithoutExecutionDetails'
+                                ]
+                            }
                             _matrix_outcome_details = value['testAxises'][0]
 
                     # JUnitReport
@@ -215,7 +220,8 @@ def main():
                 ),
                 'last_modified': _job['last_modified'],
                 'task_log': _log,
-                'outcome_details': _matrix_outcome_details,
+                'matrix_general_details': _matrix_general_details,
+                'matrix_outcome_details': _matrix_outcome_details,
                 'revision': _revSHA,
                 'pullreq_html_url': _github_data['html_url'],
                 'pullreq_html_title': _github_data['title'],
@@ -225,7 +231,7 @@ def main():
             logger.info(
                 'Duration: {0:.0f} min {1} - {2} - '
                 '{3}/tasks/{4} - {5} - {6} - {7} - '
-                '{8} - {9} - {10} - {11} - {12}\n'.format(
+                '{8} - {9} - {10} - {11} - {12} - {13}\n'.format(
                     (dt_obj_end - dt_obj_start).total_seconds() / 60,
                     _job['who'],
                     _job['result'],
@@ -237,6 +243,7 @@ def main():
                     if _matrix_outcome_details else None,
                     _matrix_outcome_details['outcome']
                     if _matrix_outcome_details else None,
+                    _matrix_general_details['webLink'],
                     _revSHA,
                     _test_details,
                     _github_data['html_url'],
