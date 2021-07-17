@@ -5,26 +5,17 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import argparse
-import configparser
 import json
 import os
 import requests
 import sys
 
 
-config = configparser.ConfigParser()
-
-
 def parse_args(cmdln_args):
     parser = argparse.ArgumentParser(
         description='Performs post operations on dataset'
     )
-    parser.add_argument(
-        '--config',
-        default='config.ini',
-        help='Configuration',
-        required=True
-    )
+
     parser.add_argument(
         '--input',
         default='output.json',
@@ -42,7 +33,6 @@ def post_to_slack(data):
 
 def main():
     args = parse_args(sys.argv[1:])
-    config.read(args.config)
 
     try:
         with open(args.input) as data_file:
@@ -55,8 +45,10 @@ def main():
                                 "type": "header",
                                 "text": {
                                     "type": "plain_text",
-                                    "text": "Recent UI test results from {}".
-                                    format(config['project']['repo']),
+                                    "text": "Recent {} results from {}".format(
+                                        data['job_symbol'],
+                                        data['repo']
+                                    ),
                                 }
                             },
                             {
