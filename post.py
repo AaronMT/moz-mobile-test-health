@@ -61,15 +61,6 @@ def main():
                             },
                             {
                                 "type": "section",
-                                "text": {
-                                    "type": "mrkdwn",
-                                    "text": "*Project*\n{}".format(
-                                        config['project']['repo']
-                                    )
-                                }
-                            },
-                            {
-                                "type": "section",
                                 "fields": [
                                     {
                                         "type": "mrkdwn",
@@ -104,7 +95,6 @@ def main():
                     }
 
                     post_to_slack(payload)
-                    '''print(json.dumps(payload,   indent=4))'''
 
     except OSError as err:
         print(err)
