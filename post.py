@@ -9,6 +9,7 @@ import json
 import os
 import requests
 import sys
+from datetime import datetime
 
 
 def parse_args(cmdln_args):
@@ -71,7 +72,9 @@ def main():
                                     {
                                         "type": "mrkdwn",
                                         "text": "*Date:*\n{}".format(
-                                            dataset['last_modified']
+                                            datetime.fromisoformat(
+                                                dataset['last_modified']
+                                            ).date()
                                         )
                                     },
                                     {
