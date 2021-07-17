@@ -44,70 +44,60 @@ def main():
     args = parse_args(sys.argv[1:])
     config.read(args.config)
 
-    summary = []
-
     try:
         with open(args.input) as data_file:
             data = json.load(data_file)
             for dataset in data['dataset_results']:
                 for problem in dataset['problem_test_details']:
-                    summary.append({
-                        'repo': config['project']['repo'],
-                        'date': dataset['last_modified'],
-                        'firebase_url':
-                            dataset['matrix_general_details']['webLink'],
-                        'problem': problem
-                    })
-    except OSError as err:
-        print(err)
-        sys.exit(1)
-
-    if summary is not None:
-        for section in summary:
-            payload = {
-                "blocks": [
-                    {
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": "*Project*\n{0}".format(section['repo'])
-                        }
-                    },
-                    {
-                        "type": "section",
-                        "fields": [
+                    payload = {
+                        "blocks": [
                             {
-                                "type": "mrkdwn",
-                                "text": "*Test:*\n{0}".format(
-                                    section['problem']['name']
-                                )
+                                "type": "section",
+                                "text": {
+                                    "type": "mrkdwn",
+                                    "text": "*Project*\n{}".format(
+                                        config['project']['repo']
+                                    )
+                                }
                             },
                             {
-                                "type": "mrkdwn",
-                                "text": "*Reason:*\n{0}".format(
-                                    section['problem']['result']
-                                )
-                            },
-                            {
-                                "type": "mrkdwn",
-                                "text": "*Date:*\n{0}".format(
-                                    section['date']
-                                )
-                            },
-                            {
-                                "type": "mrkdwn",
-                                "text": "*URL:*\n{0}".format(
-                                    section['firebase_url']
-                                )
+                                "type": "section",
+                                "fields": [
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Test:*\n{}".format(
+                                            problem['name']
+                                        )
+                                    },
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Reason:*\n{}".format(
+                                            problem['result']
+                                        )
+                                    },
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Date:*\n{}".format(
+                                            dataset['last_modified']
+                                        )
+                                    },
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*URL:*\n{}".format(
+                                            dataset['matrix_general_details']
+                                            ['webLink']
+                                        )
+                                    }
+                                ]
                             }
                         ]
                     }
-                ]
-            }
 
-            post_to_slack(payload)
+                    post_to_slack(payload)
 
-        print(json.dumps(summary, indent=4, sort_keys=True))
+    except OSError as err:
+        print(err)
+        sys.exit(1)
 
 
 if __name__ == '__main__':
