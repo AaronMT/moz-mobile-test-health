@@ -52,6 +52,14 @@ def main():
                     payload = {
                         "blocks": [
                             {
+                                "type": "header",
+                                "text": {
+                                    "type": "plain_text",
+                                    "text": "Recent UI test results from {}".
+                                    format(config['project']['repo']),
+                                }
+                            },
+                            {
                                 "type": "section",
                                 "text": {
                                     "type": "mrkdwn",
@@ -71,8 +79,10 @@ def main():
                                     },
                                     {
                                         "type": "mrkdwn",
-                                        "text": "*Reason:*\n{}".format(
-                                            problem['result']
+                                        "text": "*Reason:*\n{} {}".format(
+                                            problem['result'], ":x:"
+                                            if problem['result'] == "failure"
+                                            else ":warning:"
                                         )
                                     },
                                     {
@@ -83,7 +93,7 @@ def main():
                                     },
                                     {
                                         "type": "mrkdwn",
-                                        "text": "*URL:*\n{}".format(
+                                        "text": "*URL:*\n<{}|Firebase>".format(
                                             dataset['matrix_general_details']
                                             ['webLink']
                                         )
@@ -94,6 +104,7 @@ def main():
                     }
 
                     post_to_slack(payload)
+                    '''print(json.dumps(payload,   indent=4))'''
 
     except OSError as err:
         print(err)
