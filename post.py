@@ -46,7 +46,7 @@ def main():
                                 "type": "header",
                                 "text": {
                                     "type": "plain_text",
-                                    "text": "Recent {} results from {}".format(
+                                    "text": "Recent {} problems in {}".format(
                                         data['job_symbol'],
                                         data['repo']
                                     ),
