@@ -59,6 +59,19 @@ def main():
                                 }
                             },
                             {
+                                "type": "context",
+                                "elements": [
+                                    {
+                                        "type": "plain_text",
+                                        "text": "Author: {}\nPull Request: {}"
+                                        .format(
+                                            dataset['author'], 
+                                            dataset['pullreq_html_title']
+                                        ),
+                                    }
+                                ]
+                            },
+                            {
                                 "type": "section",
                                 "fields": [
                                     {
@@ -90,6 +103,41 @@ def main():
                                             ['webLink']
                                         )
                                     },
+                                ]
+                            },
+                            {
+                                "type": "actions",
+                                "elements": [
+                                    {
+                                        "type": "button",
+                                        "text": {
+                                            "type": "plain_text",
+                                            "text": "View Task"
+                                        },
+                                        "value": "push_button_1",
+                                        "action_id": "button-action-1",
+                                        "url": dataset['task_html_url']
+                                    },
+                                    {
+                                        "type": "button",
+                                        "text": {
+                                            "type": "plain_text",
+                                            "text": "View Pull Request"
+                                        },
+                                        "value": "push_button_2",
+                                        "action_id": "button-action-2",
+                                        "url": dataset['pullreq_html_url']
+                                    },
+                                    {
+                                        "type": "button",
+                                        "text": {
+                                            "type": "plain_text",
+                                            "text": "View Task Log"
+                                        },
+                                        "value": "push_button_3",
+                                        "action_id": "button-action-3",
+                                        "url": dataset['task_log']
+                                    }
                                 ]
                             },
                             {
