@@ -98,8 +98,7 @@ def main():
                         ]
                     }
 
-                    print(json.dumps(payload, indent=4))
-                    #post_to_slack(payload)
+                    post_to_slack(payload)
 
     except OSError as err:
         print(err)
