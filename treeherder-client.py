@@ -28,7 +28,7 @@ import urllib.error
 import urllib.request as request
 import xmltodict
 from statistics import mean
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from thclient import TreeherderClient
 
 
@@ -69,7 +69,11 @@ def main():
         c = THClient()
         p = c.client.get_pushes(
             project=config['project']['repo'],
-            count=int(config['pushes']['count'])
+            count=int(config['pushes']['count']),
+            enddate=date.today().isoformat(),
+            startdate=date.today() - timedelta(
+                days=int(config['pushes']['days'])
+            )
         )
     except requests.exceptions.HTTPError as err:
         raise SystemExit(err)
