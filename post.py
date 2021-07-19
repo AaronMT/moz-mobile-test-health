@@ -46,9 +46,15 @@ def main():
                                 "type": "header",
                                 "text": {
                                     "type": "plain_text",
-                                    "text": "Recent {} problems in {}".format(
+                                    "text": "Recent {} problems in {} {}"
+                                    .format(
                                         data['job_symbol'],
-                                        data['repo']
+                                        data['repo'],
+                                        ':firefox-browser:'
+                                        if data['repo'] == 'fenix'
+                                        else ':refbrowser:'
+                                        if data['repo'] == 'reference-browser'
+                                        else ':android:'
                                     ),
                                 }
                             },
@@ -83,13 +89,17 @@ def main():
                                             dataset['matrix_general_details']
                                             ['webLink']
                                         )
-                                    }
+                                    },
                                 ]
+                            },
+                            {
+                                "type": "divider"
                             }
                         ]
                     }
 
-                    post_to_slack(payload)
+                    print(json.dumps(payload, indent=4))
+                    #post_to_slack(payload)
 
     except OSError as err:
         print(err)
