@@ -36,6 +36,8 @@ logging.basicConfig(filename='output.log', filemode='w', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 config = configparser.ConfigParser()
+project_config = configparser.ConfigParser()
+
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
@@ -44,10 +46,15 @@ def parse_args(cmdln_args):
         description='Fetch job and push data from TreeHerder instance'
     )
     parser.add_argument(
+        '--project',
+        required=True,
+        help='Project configuration'
+    )
+    parser.add_argument(
         '--config',
         default='config.ini',
         help='Configuration',
-        required=True
+        required=False
     )
 
     return parser.parse_args(args=cmdln_args)
@@ -64,12 +71,13 @@ class THClient:
 def main():
     args = parse_args(sys.argv[1:])
     config.read(args.config)
+    project_config.read(args.project + ".ini")
 
     try:
         c = THClient()
         p = c.client.get_pushes(
-            project=config['project']['repo'],
-            count=int(config['pushes']['count']),
+            project=args.project,
+            count=int(config['pushes']['maxcount']),
             enddate=date.today().isoformat(),
             startdate=date.today() - timedelta(
                 days=int(config['pushes']['days'])
@@ -84,20 +92,20 @@ def main():
 
     print('Fetched Push data from TreeHerder..')
     print('Fetching recent {0} in {1} ({2} pushes)\n'.format(
-            config['job']['result'],
-            config['job']['symbol'],
-            config['pushes']['count']
+            project_config['job']['result'],
+            project_config['job']['symbol'],
+            config['pushes']['maxcount']
         )
     )
 
     for _push in sorted(p, key=lambda push: push['id']):
         jobs = c.client.get_jobs(
-            project=config['project']['repo'],
+            project=args.project,
             push_id=_push['id'],
-            tier=config['job']['tier'],
-            job_type_symbol=config['job']['symbol'],
-            result=config['job']['result'],
-            job_group_symbol=config['job']['group_symbol'],
+            tier=project_config['job']['tier'],
+            job_type_symbol=project_config['job']['symbol'],
+            result=project_config['job']['result'],
+            job_group_symbol=project_config['job']['group_symbol'],
             who=config['filters']['author']
         )
 
@@ -107,7 +115,7 @@ def main():
             _revSHA = None
 
             _log = c.client.get_job_log_url(
-                project=config['project']['repo'],
+                project=args.project,
                 job_id=_job['id']
             )
             for _log_url in _log:
@@ -116,7 +124,9 @@ def main():
             # TaskCluster
             try:
                 # Dependent on public artifact visibility
-                if (re.compile("^(ui-){1}.*")).search(config['job']['symbol']):
+                if (re.compile("^(ui-){1}.*")).search(
+                    project_config['job']['symbol']
+                ):
                     # Matrix
                     with request.urlopen(
                         '{0}/{1}/{2}/public/results/{3}'.format(
@@ -187,7 +197,7 @@ def main():
                     request.Request(
                         url='{0}{1}/commits/{2}/pulls'.format(
                             config['project']['url'],
-                            config['project']['repo'],
+                            args.project,
                             _revSHA
                         ),
                         headers={
@@ -259,9 +269,9 @@ def main():
 
         summary_set = {
             'dataset_results': dataset,
-            'repo': config['project']['repo'],
-            'job_symbol': config['job']['symbol'],
-            'job_result': config['job']['result'],
+            'repo': args.project,
+            'job_symbol': project_config['job']['symbol'],
+            'job_result': project_config['job']['result'],
             'job_duration_avg': round(mean(durations), 2),
             'outcome_count': len(outcomes)
         }
