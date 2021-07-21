@@ -46,17 +46,23 @@ def parse_args(cmdln_args):
         description='Fetch job and push data from TreeHerder instance'
     )
     parser.add_argument(
+        '--project',
+        required=True,
+        help='Project'
+    )
+    parser.add_argument(
         '--config',
         default='config.ini',
         help='Configuration',
         required=False
     )
+    '''
     parser.add_argument(
         '--project-config',
         default='config.ini',
         help='Configuration',
         required=True
-    )
+    )'''
 
     return parser.parse_args(args=cmdln_args)
 
@@ -72,12 +78,12 @@ class THClient:
 def main():
     args = parse_args(sys.argv[1:])
     config.read(args.config)
-    project_config.read(args.project_config)
+    project_config.read(args.project + ".ini")
 
     try:
         c = THClient()
         p = c.client.get_pushes(
-            project=config['project']['repo'],
+            project=args.project,
             count=int(config['pushes']['count']),
             enddate=date.today().isoformat(),
             startdate=date.today() - timedelta(
@@ -101,7 +107,7 @@ def main():
 
     for _push in sorted(p, key=lambda push: push['id']):
         jobs = c.client.get_jobs(
-            project=config['project']['repo'],
+            project=args.project,
             push_id=_push['id'],
             tier=project_config['job']['tier'],
             job_type_symbol=project_config['job']['symbol'],
@@ -116,7 +122,7 @@ def main():
             _revSHA = None
 
             _log = c.client.get_job_log_url(
-                project=config['project']['repo'],
+                project=args.project,
                 job_id=_job['id']
             )
             for _log_url in _log:
@@ -196,7 +202,7 @@ def main():
                     request.Request(
                         url='{0}{1}/commits/{2}/pulls'.format(
                             config['project']['url'],
-                            config['project']['repo'],
+                            args.project,
                             _revSHA
                         ),
                         headers={
@@ -268,7 +274,7 @@ def main():
 
         summary_set = {
             'dataset_results': dataset,
-            'repo': config['project']['repo'],
+            'repo': args.project,
             'job_symbol': project_config['job']['symbol'],
             'job_result': project_config['job']['result'],
             'job_duration_avg': round(mean(durations), 2),
