@@ -1,0 +1,58 @@
+name: "Reference Browser"
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9]
+        configuration: 
+          - { config: 'reference-browser'}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Set current date as env variable
+        id: date
+        run: |
+          echo "::set-output name=date::$(date +'%Y_%m_%d_%I_%M_%p')"
+          echo "::set-output name=day::$(date +'%Y-%m-%d')"
+      - name: Run script
+        id: runClient
+        run: |
+          python treeherder-client.py --project='${{ matrix.configuration['config'] }}'
+          [ ! -e output.log ] || cat output.log
+          [ ! -e output.json ] || cp output.json ${{ steps.date.outputs.date }}.json
+          [ ! -e output.json ] || python post.py --input=output.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      - uses: actions/upload-artifact@v2
+        name: Upload Artifact (json)
+        if: hashFiles('output.json') != ''
+        with:
+          name: JSON (${{ steps.date.outputs.date }}.json) [zip]
+          path: ${{ steps.date.outputs.date }}.json
+      - uses: google-github-actions/setup-gcloud@master
+        name: Authenticate Google Cloud
+        with:
+          service_account_key: ${{ secrets.GCP_CREDENTIALS }}
+          export_default_credentials: true
+      - uses: google-github-actions/upload-cloud-storage@main
+        if: hashFiles('output.json') != ''
+        name: Upload Artifact (json) to Google Cloud Storage
+        with: 
+          path: ${{ steps.date.outputs.date }}.json
+          destination: mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}
+      - name: Show public URL
+        if: hashFiles('output.json') != ''
+        run: |
+          echo "Public URL: https://storage.googleapis.com/mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}/${{ steps.date.outputs.date}}.json"
