@@ -49,6 +49,12 @@ def parse_args(cmdln_args):
         help='Configuration',
         required=True
     )
+    parser.add_argument(
+        '--project-config',
+        default='config.ini',
+        help='Configuration',
+        required=True
+    )
 
     return parser.parse_args(args=cmdln_args)
 
