@@ -36,6 +36,8 @@ logging.basicConfig(filename='output.log', filemode='w', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 config = configparser.ConfigParser()
+project_config = configparser.ConfigParser()
+
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
@@ -70,6 +72,7 @@ class THClient:
 def main():
     args = parse_args(sys.argv[1:])
     config.read(args.config)
+    project_config.read(args.project_config)
 
     try:
         c = THClient()
@@ -90,8 +93,8 @@ def main():
 
     print('Fetched Push data from TreeHerder..')
     print('Fetching recent {0} in {1} ({2} pushes)\n'.format(
-            config['job']['result'],
-            config['job']['symbol'],
+            project_config['job']['result'],
+            project_config['job']['symbol'],
             config['pushes']['count']
         )
     )
@@ -100,10 +103,10 @@ def main():
         jobs = c.client.get_jobs(
             project=config['project']['repo'],
             push_id=_push['id'],
-            tier=config['job']['tier'],
-            job_type_symbol=config['job']['symbol'],
-            result=config['job']['result'],
-            job_group_symbol=config['job']['group_symbol'],
+            tier=project_config['job']['tier'],
+            job_type_symbol=project_config['job']['symbol'],
+            result=project_config['job']['result'],
+            job_group_symbol=project_config['job']['group_symbol'],
             who=config['filters']['author']
         )
 
@@ -122,7 +125,7 @@ def main():
             # TaskCluster
             try:
                 # Dependent on public artifact visibility
-                if (re.compile("^(ui-){1}.*")).search(config['job']['symbol']):
+                if (re.compile("^(ui-){1}.*")).search(project_config['job']['symbol']):
                     # Matrix
                     with request.urlopen(
                         '{0}/{1}/{2}/public/results/{3}'.format(
@@ -266,8 +269,8 @@ def main():
         summary_set = {
             'dataset_results': dataset,
             'repo': config['project']['repo'],
-            'job_symbol': config['job']['symbol'],
-            'job_result': config['job']['result'],
+            'job_symbol': project_config['job']['symbol'],
+            'job_result': project_config['job']['result'],
             'job_duration_avg': round(mean(durations), 2),
             'outcome_count': len(outcomes)
         }
