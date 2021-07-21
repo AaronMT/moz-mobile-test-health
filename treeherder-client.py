@@ -114,7 +114,6 @@ def main():
                 job_group_symbol=project_config[job]['group_symbol'],
                 who=config['filters']['author']
             )
-
             for _job in jobs:
                 _matrix_outcome_details = None
                 _test_details = []
@@ -197,6 +196,9 @@ def main():
                         data = json.loads(source)
                         _revSHA = data['payload']['env']['MOBILE_HEAD_REV']
                 except urllib.error.URLError as err:
+                    print("Artifact(s) not available for {}".format(
+                        _job['task_id']
+                    ))
                     raise SystemExit(err)
 
                 # Github
