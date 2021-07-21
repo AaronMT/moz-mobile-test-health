@@ -31,8 +31,10 @@ jobs:
           python treeherder-client.py --config='${{ matrix.configuration['config'] }}'
           [ ! -e output.log ] || cat output.log
           [ ! -e output.json ] || cp output.json ${{ steps.date.outputs.date }}.json
+          [ ! -e output.json ] || python post.py --intput=output.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
       - uses: actions/upload-artifact@v2
         name: Upload Artifact (json)
         if: hashFiles('output.json') != ''
