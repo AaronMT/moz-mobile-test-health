@@ -84,7 +84,7 @@ def main():
         c = THClient()
         p = c.client.get_pushes(
             project=args.project,
-            count=int(config['pushes']['count']),
+            count=int(config['pushes']['maxcount']),
             enddate=date.today().isoformat(),
             startdate=date.today() - timedelta(
                 days=int(config['pushes']['days'])
@@ -101,7 +101,7 @@ def main():
     print('Fetching recent {0} in {1} ({2} pushes)\n'.format(
             project_config['job']['result'],
             project_config['job']['symbol'],
-            config['pushes']['count']
+            config['pushes']['maxcount']
         )
     )
 
