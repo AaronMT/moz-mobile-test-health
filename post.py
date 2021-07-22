@@ -21,7 +21,7 @@ def parse_args(cmdln_args):
         '--input',
         default='output.json',
         help='Input (JSON)',
-        required=True
+        required=False
     )
 
     return parser.parse_args(args=cmdln_args)
@@ -38,26 +38,28 @@ def main():
     try:
         with open(args.input) as data_file:
             data = json.load(data_file)
+            blocks = [
+                {
+                    "type": "header",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "Recent {} problems in {} {}"
+                        .format(
+                            data['job_symbol'],
+                            data['repo'],
+                            ':firefox-browser:'
+                            if data['repo'] == 'fenix'
+                            else ':refbrowser:'
+                            if data['repo'] == 'reference-browser'
+                            else ':android:'
+                        )
+                    }
+                }
+            ]
+
             for dataset in data['dataset_results']:
                 for problem in dataset['problem_test_details']:
-                    payload = {
-                        "blocks": [
-                            {
-                                "type": "header",
-                                "text": {
-                                    "type": "plain_text",
-                                    "text": "Recent {} problems in {} {}"
-                                    .format(
-                                        data['job_symbol'],
-                                        data['repo'],
-                                        ':firefox-browser:'
-                                        if data['repo'] == 'fenix'
-                                        else ':refbrowser:'
-                                        if data['repo'] == 'reference-browser'
-                                        else ':android:'
-                                    ),
-                                }
-                            },
+                    blocks.append(
                             {
                                 "type": "context",
                                 "elements": [
@@ -65,12 +67,13 @@ def main():
                                         "type": "plain_text",
                                         "text": "Author: {}\nPull Request: {}"
                                         .format(
-                                            dataset['author'], 
+                                            dataset['author'],
                                             dataset['pullreq_html_title']
                                         ),
                                     }
                                 ]
-                            },
+                            })
+                    blocks.append(
                             {
                                 "type": "section",
                                 "fields": [
@@ -104,7 +107,8 @@ def main():
                                         )
                                     },
                                 ]
-                            },
+                            })
+                    blocks.append(
                             {
                                 "type": "actions",
                                 "elements": [
@@ -139,14 +143,14 @@ def main():
                                         "url": dataset['task_log']
                                     }
                                 ]
-                            },
+                            })
+                    blocks.append(
                             {
                                 "type": "divider"
                             }
-                        ]
-                    }
+                    )
 
-                    post_to_slack(payload)
+            post_to_slack({'blocks': blocks})
 
     except OSError as err:
         print(err)
