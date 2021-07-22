@@ -95,7 +95,7 @@ def main():
     outcomes = []
     dataset = []
 
-    for job in project_config.sections():     
+    for job in project_config.sections():
         print('Fetched Push data from TreeHerder..')
         print('Fetching recent {0} in {1} ({2} pushes)\n'.format(
             project_config[job]['result'],

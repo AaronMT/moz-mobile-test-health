@@ -9,7 +9,6 @@ import json
 import os
 import requests
 import sys
-from datetime import datetime
 
 
 def parse_args(cmdln_args):
@@ -38,17 +37,17 @@ def main():
     try:
         with open(args.input) as data_file:
             data = json.load(data_file)
-            blocks = [
+            content = []
+            header = [
                 {
                     "type": "header",
                     "text": {
                         "type": "plain_text",
-                        "text": "Recent {} problems in {} {}"
+                        "text": "{}: daily {} failures/intermittents {}"
                         .format(
-                            data['job_symbol'],
                             data['repo'],
-                            ':firefox-browser:'
-                            if data['repo'] == 'fenix'
+                            data['job_symbol'],
+                            ':firefox-browser:' if data['repo'] == 'fenix'
                             else ':refbrowser:'
                             if data['repo'] == 'reference-browser'
                             else ':android:'
@@ -59,98 +58,55 @@ def main():
 
             for dataset in data['dataset_results']:
                 for problem in dataset['problem_test_details']:
-                    blocks.append(
-                            {
-                                "type": "context",
-                                "elements": [
-                                    {
-                                        "type": "plain_text",
-                                        "text": "Author: {}\nPull Request: {}"
+                    content.append(
+                            [
+                                problem['name'],
+
+                                {
+                                    "type": "section",
+                                    "text": {
+                                        "type": "mrkdwn",
+                                        "text":
+                                        "*{}* (#<{}|{}>) (<{}|task log>)"
                                         .format(
-                                            dataset['author'],
-                                            dataset['pullreq_html_title']
-                                        ),
+                                            problem['name'],
+                                            dataset['pullreq_html_url'],
+                                            dataset['pullreq_html_url']
+                                            .rsplit('/', 1)[-1],
+                                            dataset['task_log']
+                                        )
+                                    },
+                                    "accessory": {
+                                        "type": "button",
+                                        "text": {
+                                            "type": "plain_text",
+                                            "text": "{} {}".format(
+                                                problem['result'], ":x:"
+                                                if problem['result']
+                                                == "failure"
+                                                else ":warning:"
+                                            )
+                                        },
+                                        "value": "firebase",
+                                        "url":
+                                        dataset['matrix_general_details']
+                                        ['webLink'],
+                                        "action_id": "button-action"
                                     }
-                                ]
-                            })
-                    blocks.append(
-                            {
-                                "type": "section",
-                                "fields": [
-                                    {
-                                        "type": "mrkdwn",
-                                        "text": "*Test:*\n{}".format(
-                                            problem['name']
-                                        )
-                                    },
-                                    {
-                                        "type": "mrkdwn",
-                                        "text": "*Reason:*\n{} {}".format(
-                                            problem['result'], ":x:"
-                                            if problem['result'] == "failure"
-                                            else ":warning:"
-                                        )
-                                    },
-                                    {
-                                        "type": "mrkdwn",
-                                        "text": "*Date:*\n{}".format(
-                                            datetime.fromisoformat(
-                                                dataset['last_modified']
-                                            ).date()
-                                        )
-                                    },
-                                    {
-                                        "type": "mrkdwn",
-                                        "text": "*URL:*\n<{}|Firebase>".format(
-                                            dataset['matrix_general_details']
-                                            ['webLink']
-                                        )
-                                    },
-                                ]
-                            })
-                    blocks.append(
-                            {
-                                "type": "actions",
-                                "elements": [
-                                    {
-                                        "type": "button",
-                                        "text": {
-                                            "type": "plain_text",
-                                            "text": "View Task"
-                                        },
-                                        "value": "push_button_1",
-                                        "action_id": "button-action-1",
-                                        "url": dataset['task_html_url']
-                                    },
-                                    {
-                                        "type": "button",
-                                        "text": {
-                                            "type": "plain_text",
-                                            "text": "View Pull Request"
-                                        },
-                                        "value": "push_button_2",
-                                        "action_id": "button-action-2",
-                                        "url": dataset['pullreq_html_url']
-                                    },
-                                    {
-                                        "type": "button",
-                                        "text": {
-                                            "type": "plain_text",
-                                            "text": "View Task Log"
-                                        },
-                                        "value": "push_button_3",
-                                        "action_id": "button-action-3",
-                                        "url": dataset['task_log']
-                                    }
-                                ]
-                            })
-                    blocks.append(
-                            {
-                                "type": "divider"
-                            }
+                                }
+                            ]
                     )
 
-            post_to_slack({'blocks': blocks})
+            if content:
+                content = sorted(content, key=lambda x: x[0])
+                [x.__delitem__(0) for x in content]
+                content = [item for sublist in content for item in sublist]
+                post_to_slack({'blocks': header + content})
+            else:
+                print("No problems in {}. Nothing posted to Slack".format(
+                        args.input
+                    )
+                )
 
     except OSError as err:
         print(err)
