@@ -91,18 +91,16 @@ def main():
     except requests.exceptions.HTTPError as err:
         raise SystemExit(err)
 
-    durations = []
-    outcomes = []
-    dataset = []
-
     for job in project_config.sections():
-        print('Fetched Push data from TreeHerder..')
-        print('Fetching recent {0} in {1} ({2} pushes)\n'.format(
-            project_config[job]['result'],
-            project_config[job]['symbol'],
-            config['pushes']['maxcount']
-           )
-        )
+        durations, outcomes, dataset = ([] for i in range(3))
+
+        print('Fetched Push data from TreeHerder...')
+        print('Fetching result [{0}] in [{1}] ({2} max pushes) from'
+              ' the past [{3}] day(s)...'.format(
+                project_config[job]['result'],
+                project_config[job]['symbol'],
+                config['pushes']['maxcount'],
+                config['pushes']['days']), end='\n\n')
 
         for _push in sorted(p, key=lambda push: push['id']):
             jobs = c.client.get_jobs(
