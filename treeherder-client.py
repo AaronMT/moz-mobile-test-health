@@ -91,6 +91,11 @@ def main():
     except requests.exceptions.HTTPError as err:
         raise SystemExit(err)
 
+    output_json = []
+
+    print("Fetching [{}] queries in [{}]".format(
+        len(project_config.sections()), args.project), end='\n\n')
+
     for job in project_config.sections():
         durations, outcomes, dataset = ([] for i in range(3))
 
@@ -279,30 +284,37 @@ def main():
 
         if durations and outcomes and dataset:
 
-            summary_set = {
-                'dataset_results': dataset,
-                'repo': args.project,
-                'job_symbol': project_config[job]['symbol'],
-                'job_result': project_config[job]['result'],
-                'job_duration_avg': round(mean(durations), 2),
-                'outcome_count': len(outcomes)
-            }
+            output_json.append(
+                {
+                    str(project_config[job].name): dataset,
+                    'summary': {
+                        'repo': args.project,
+                        'job_symbol': project_config[job]['symbol'],
+                        'job_result': project_config[job]['result'],
+                        'job_duration_avg': round(mean(durations), 2),
+                        'outcome_count': len(outcomes)
+                    }
+                }
+            )
+
             logger.info('Summary')
             logger.info('Duration average: {0:.0f} minutes'.format(
-                    summary_set['job_duration_avg']
+                    output_json[-1]['summary']['job_duration_avg']
                 )
             )
-            logger.info('Results: {0} '.format(summary_set['outcome_count']))
-            print('Output written to LOG file', end='\n')
-
-            try:
-                with open('output.json', 'w') as outfile:
-                    json.dump(summary_set, outfile, indent=4)
-                    print('Output written to JSON file\n', end='\n')
-            except OSError as err:
-                raise SystemExit(err)
+            logger.info('Results: {0} '.format(
+                output_json[-1]['summary']['outcome_count']))
+            print('Output written to LOG file', end='\n\n')
         else:
-            print('No results found with provided config.')
+            print('No results found with provided config.', end='\n\n')
+
+    if output_json:
+        try:
+            with open('output.json', 'w') as outfile:
+                json.dump(output_json, outfile, indent=4)
+                print('Output written to [{}]'.format(outfile.name), end='\n')
+        except OSError as err:
+            raise SystemExit(err)
 
 
 if __name__ == '__main__':
