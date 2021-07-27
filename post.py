@@ -114,7 +114,7 @@ def main():
                     [x.__delitem__(0) for x in content]
                     content = [item for sublist in content for item in sublist]
 
-                    print({'blocks': header + divider + content + divider})
+                    post_to_slack({'blocks': header + divider + content + divider})
 
                 else:
                     print("No failures or intermittents in ({}) in [{}]. "
