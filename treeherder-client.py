@@ -99,9 +99,9 @@ def main():
     for job in project_config.sections():
         durations, outcomes, dataset = ([] for i in range(3))
 
-        print('Fetched Push data from TreeHerder...')
+        print('Fetched Push data from TreeHerder ...')
         print('Fetching result [{0}] in [{1}] ({2} max pushes) from'
-              ' the past [{3}] day(s)...'.format(
+              ' the past [{3}] day(s) ...'.format(
                 project_config[job]['result'],
                 project_config[job]['symbol'],
                 config['pushes']['maxcount'],
@@ -297,12 +297,12 @@ def main():
                 }
             )
 
-            logger.info('Summary')
+            logger.info('Summary [{}]'.format(project_config[job]['symbol']))
             logger.info('Duration average: {0:.0f} minutes'.format(
                     output_json[-1]['summary']['job_duration_avg']
                 )
             )
-            logger.info('Results: {0} '.format(
+            logger.info('Results: {0} \n'.format(
                 output_json[-1]['summary']['outcome_count']))
             print('Output written to LOG file', end='\n\n')
         else:

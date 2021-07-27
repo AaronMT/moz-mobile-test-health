@@ -45,6 +45,7 @@ def main():
 
             for section in dataset:
                 content, header = ([] for i in range(2))
+                divider = [{"type": "divider"}]
                 header = [
                     {
                         "type": "header",
@@ -77,7 +78,7 @@ def main():
                                 "text": {
                                     "type": "mrkdwn",
                                     "text":
-                                    "*{}* (#<{}|{}>) (<{}|task log>)"
+                                    "*{}* [#<{}|{}>] [<{}|task log>]"
                                     .format(
                                         problem['problem_test_details'][0]
                                         ['name'],
@@ -113,7 +114,7 @@ def main():
                     [x.__delitem__(0) for x in content]
                     content = [item for sublist in content for item in sublist]
 
-                    post_to_slack({'blocks': header + content})
+                    print({'blocks': header + divider + content + divider})
 
                 else:
                     print("No failures or intermittents in ({}) in [{}]. "
