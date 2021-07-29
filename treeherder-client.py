@@ -20,17 +20,17 @@ import configparser
 import json
 import logging
 import os
-import requests
 import re
 import ssl
 import sys
 import urllib.error
 import urllib.request as request
-import xmltodict
-from statistics import mean
 from datetime import date, datetime, timedelta
-from thclient import TreeherderClient
+from statistics import mean
 
+import requests
+import xmltodict
+from thclient import TreeherderClient
 
 logging.basicConfig(filename='output.log', filemode='w', level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -79,8 +79,8 @@ def main():
     args = parse_args(sys.argv[1:])
     config.read(args.config)
 
-    if os.path.isfile(args.project + '.ini'):
-        project_config.read(args.project + '.ini')
+    if os.path.isfile(''.join([args.project, '.ini'])):
+        project_config.read(''.join([args.project, '.ini']))
     else:
         print('Project configuration not found')
         sys.exit(1)
@@ -250,10 +250,10 @@ def main():
                     ),
                     'author': _job['who'],
                     'result': _job['result'],
-                    'task_html_url': '{0}'.format(
-                        config['taskcluster']['host']
-                        + '/tasks/' + _job['task_id']
-                    ),
+                    'task_html_url': '{0}'.format(''.join(
+                        [config['taskcluster']['host'], '/tasks/',
+                            _job['task_id']]
+                    )),
                     'last_modified': _job['last_modified'],
                     'task_log': _log,
                     'matrix_general_details': _matrix_general_details,
