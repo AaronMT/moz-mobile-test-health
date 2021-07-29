@@ -60,6 +60,13 @@ def parse_args(cmdln_args):
     return parser.parse_args(args=cmdln_args)
 
 
+def serialize_sets(obj):
+    if isinstance(obj, set):
+        return list(obj)
+
+    return obj
+
+
 class THClient:
     def __init__(self):
         self.set_config()
@@ -91,7 +98,7 @@ def main():
     except requests.exceptions.HTTPError as err:
         raise SystemExit(err)
 
-    output_json = []
+    output_JSON = []
 
     print("Fetching [{}] queries in [{}]".format(
         len(project_config.sections()), args.project), end='\n\n')
@@ -284,7 +291,10 @@ def main():
 
         if durations and outcomes and dataset:
 
-            output_json.append(
+            tests = [problem['name'] for push in dataset
+                     for problem in push['problem_test_details']]
+
+            output_JSON.append(
                 {
                     str(project_config[job].name): dataset,
                     'summary': {
@@ -292,26 +302,29 @@ def main():
                         'job_symbol': project_config[job]['symbol'],
                         'job_result': project_config[job]['result'],
                         'job_duration_avg': round(mean(durations), 2),
-                        'outcome_count': len(outcomes)
+                        'outcome_count': len(outcomes),
+                        'duplicates': json.dumps(set(
+                            [x for x in tests if tests.count(x) > 1]
+                            ), default=serialize_sets)
                     }
                 }
             )
 
             logger.info('Summary [{}]'.format(project_config[job]['symbol']))
             logger.info('Duration average: {0:.0f} minutes'.format(
-                    output_json[-1]['summary']['job_duration_avg']
+                    output_JSON[-1]['summary']['job_duration_avg']
                 )
             )
             logger.info('Results: {0} \n'.format(
-                output_json[-1]['summary']['outcome_count']))
+                output_JSON[-1]['summary']['outcome_count']))
             print('Output written to LOG file', end='\n\n')
         else:
             print('No results found with provided config.', end='\n\n')
 
-    if output_json:
+    if output_JSON:
         try:
             with open('output.json', 'w') as outfile:
-                json.dump(output_json, outfile, indent=4)
+                json.dump(output_JSON, outfile, indent=4)
                 print('Output written to [{}]'.format(outfile.name), end='\n')
         except OSError as err:
             raise SystemExit(err)
