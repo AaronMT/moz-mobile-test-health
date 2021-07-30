@@ -117,6 +117,10 @@ def main():
 
                     post_to_slack(
                         {'blocks': header + divider + content + divider})
+                    print("Slack message posted for [{}] results".format(
+                        ''.join(
+                            [section['summary']['job_symbol'], '.',
+                             section['summary']['job_result']])), end="\n")
 
                 else:
                     print("No failures or intermittents in ({}) in [{}]. "

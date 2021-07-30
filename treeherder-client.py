@@ -232,7 +232,6 @@ def main():
                         _github_data = json.loads(source)
                         for _data in _github_data:
                             _github_data = _data
-
                 except urllib.error.URLError as err:
                     raise SystemExit(err)
 
@@ -269,7 +268,7 @@ def main():
                 logger.info(
                     'Duration: {0:.0f} min {1} - {2} - '
                     '{3}/tasks/{4} - {5} - {6} - {7} - '
-                    '{8} - {9} - {10} - {11} - {12} - {13}\n'.format(
+                    '{8} - {9} - {10} - {11} - {12} - {13}'.format(
                         (dt_obj_end - dt_obj_start).total_seconds() / 60,
                         _job['who'],
                         _job['result'],
@@ -310,7 +309,7 @@ def main():
                 }
             )
 
-            logger.info('Summary [{}]'.format(project_config[job]['symbol']))
+            logger.info('Summary: [{}]'.format(project_config[job]['symbol']))
             logger.info('Duration average: {0:.0f} minutes'.format(
                     output_JSON[-1]['summary']['job_duration_avg']
                 )
@@ -325,7 +324,8 @@ def main():
         try:
             with open('output.json', 'w') as outfile:
                 json.dump(output_JSON, outfile, indent=4)
-                print('Output written to [{}]'.format(outfile.name), end='\n')
+                print('Output written to [{}]'.format(
+                    outfile.name), end='\n\n')
         except OSError as err:
             raise SystemExit(err)
 
