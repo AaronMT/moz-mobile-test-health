@@ -9,7 +9,7 @@ jobs:
       matrix:
         python-version: [3.9]
         configuration: 
-          - { config: ['fenix', 'reference-browser', 'android-components']}
+          - { config: 'fenix'}
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -28,7 +28,7 @@ jobs:
       - name: Run script
         id: runClient
         run: |
-          python treeherder-client.py --project='${{ matrix.configuration.config }}'
+          python treeherder-client.py --project='${{ matrix.configuration['config'] }}'
           [ ! -e output.log ] || cat output.log
           [ ! -e output.json ] || cp output.json ${{ steps.date.outputs.date }}.json
           [ ! -e output.json ] || python post.py --input=output.json
