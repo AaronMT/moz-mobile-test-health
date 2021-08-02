@@ -100,19 +100,19 @@ def main():
 
     output_JSON = []
 
-    print("Fetching [{}] queries in [{}]".format(
-        len(project_config.sections()), args.project), end='\n\n')
+    print("Fetching [{}] queries in [{}] {}".format(
+        len(project_config.sections()), args.project,
+        project_config.sections()), end='\n\n')
 
     for job in project_config.sections():
         durations, outcomes, dataset = ([] for i in range(3))
 
-        print('Fetched Push data from TreeHerder ...')
         print('Fetching result [{0}] in [{1}] ({2} max pushes) from'
               ' the past [{3}] day(s) ...'.format(
                 project_config[job]['result'],
                 project_config[job]['symbol'],
                 config['pushes']['maxcount'],
-                config['pushes']['days']), end='\n\n')
+                config['pushes']['days']), end='\n')
 
         for _push in sorted(p, key=lambda push: push['id']):
             jobs = c.client.get_jobs(
