@@ -28,6 +28,9 @@ jobs:
         run: |
           echo "::set-output name=date::$(date +'%Y_%m_%d_%I_%M_%p')"
           echo "::set-output name=day::$(date +'%Y-%m-%d')"
+          echo "::set-output name=file::$JSON_FILE"
+        env:
+          JSON_FILE: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json
       - name: Run script
         id: runClient
         run: |
@@ -35,6 +38,7 @@ jobs:
           [ ! -e output.log ] || cat output.log
           [ ! -e output.json ] || cp output.json ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json
           [ ! -e output.json ] || python post.py --input=output.json
+          echo "Filename: " + $JSON_FILE
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
