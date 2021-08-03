@@ -53,7 +53,7 @@ jobs:
         if: hashFiles('output.json') != ''
         name: Upload Artifact (json) to Google Cloud Storage
         with: 
-          path: ${{ steps.date.outputs.date }}.json
+          path: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json
           destination: mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}
       - name: Show public URL
         if: hashFiles('output.json') != ''
