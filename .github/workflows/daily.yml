@@ -33,18 +33,19 @@ jobs:
         run: |
           python treeherder-client.py --project=${{ matrix.configuration }}
           [ ! -e output.log ] || cat output.log
-          [ ! -e output.json ] || cp output.json $JSON_FILE
+          [ ! -e output.json ] || cp output.json $JSON_OUTFILE
           [ ! -e output.json ] || python post.py --input=output.json
+          [ ! -e output.json ] || echo "FILE=$JSON_FILE" >> $GITHUB_ENV
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          JSON_FILE: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json
+          JSON_OUTFILE: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json
       - uses: actions/upload-artifact@v2
         name: Upload Artifact (json)
         if: hashFiles('output.json') != ''
         with:
-          name: JSON (${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json) [zip]
-          path: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json
+          name: JSON (${{ env.FILE }}) [zip]
+          path: ${{ env.FILE }}
       - uses: google-github-actions/setup-gcloud@master
         name: Authenticate Google Cloud
         with:
@@ -54,9 +55,9 @@ jobs:
         if: hashFiles('output.json') != ''
         name: Upload Artifact (json) to Google Cloud Storage
         with: 
-          path: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json
+          path: ${{ env.FILE }}
           destination: mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}
       - name: Show public URL
         if: hashFiles('output.json') != ''
         run: |
-          echo "Public URL: https://storage.googleapis.com/mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}/${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json"
+          echo "Public URL: https://storage.googleapis.com/mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}/${{ env.FILE }}"
