@@ -42,8 +42,8 @@ jobs:
         name: Upload Artifact (json)
         if: hashFiles('output.json') != ''
         with:
-          name: JSON (${{ steps.date.outputs.date }}.json) [zip]
-          path: ${{ steps.date.outputs.date }}.json
+          name: JSON (${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json) [zip]
+          path: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json
       - uses: google-github-actions/setup-gcloud@master
         name: Authenticate Google Cloud
         with:
