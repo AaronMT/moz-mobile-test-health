@@ -33,7 +33,7 @@ jobs:
         run: |
           python treeherder-client.py --project=${{ matrix.configuration }}
           [ ! -e output.log ] || cat output.log
-          [ ! -e output.json ] || cp output.json ${{ steps.date.outputs.date }}.json
+          [ ! -e output.json ] || cp output.json ${{ steps.date.outputs.date }}_${ matrix.configuration }}.json
           [ ! -e output.json ] || python post.py --input=output.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
