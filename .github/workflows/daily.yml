@@ -58,4 +58,4 @@ jobs:
       - name: Show public URL
         if: hashFiles('output.json') != ''
         run: |
-          echo "Public URL: https://storage.googleapis.com/mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}/${{ steps.date.outputs.date}}.json"
+          echo "Public URL: https://storage.googleapis.com/mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}/${{ steps.date.outputs.date}}_${{ matrix.configuration }}.json"
