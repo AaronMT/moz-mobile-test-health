@@ -28,9 +28,6 @@ jobs:
         run: |
           echo "::set-output name=date::$(date +'%Y_%m_%d_%I_%M_%p')"
           echo "::set-output name=day::$(date +'%Y-%m-%d')"
-          echo "::set-output name=file::$JSON_FILE"
-        env:
-          JSON_FILE: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json
       - name: Run script
         id: runClient
         run: |
@@ -42,6 +39,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          JSON_FILE: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json
       - uses: actions/upload-artifact@v2
         name: Upload Artifact (json)
         if: hashFiles('output.json') != ''
