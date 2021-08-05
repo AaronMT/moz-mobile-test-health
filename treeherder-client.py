@@ -176,13 +176,16 @@ def main():
                             for child in root['testsuite']:
                                 if child['@name'] != 'junit-ignored':
                                     if child['@failures'] == '1':
-                                        _test_details.append(
-                                            {
-                                                'name': child['testcase']
-                                                ['@name'],
-                                                'result': 'failure'
-                                            }
-                                        )
+                                        for testcase in child['testcase']:
+                                            if 'failure' in testcase:
+                                                _test_details.append(
+                                                    {
+                                                        'name':
+                                                        child['testcase'][0]
+                                                        ['@name'],
+                                                        'result': 'failure'
+                                                    }
+                                                )
                                     elif child['@flakes'] == '1':
                                         _test_details.append(
                                             {
