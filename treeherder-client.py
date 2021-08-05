@@ -159,7 +159,7 @@ def main():
                                         'webLinkWithoutExecutionDetails'
                                     ]
                                 }
-                                _matrix_outcome_details = value['axes'][0]
+                                _matrix_outcome_details = value['axes']
 
                         # JUnitReport
                         with request.urlopen(
@@ -181,8 +181,7 @@ def main():
                                                 _test_details.append(
                                                     {
                                                         'name':
-                                                        child['testcase'][0]
-                                                        ['@name'],
+                                                        testcase['@name'],
                                                         'result': 'failure'
                                                     }
                                                 )
@@ -279,9 +278,11 @@ def main():
                         _job['task_id'],
                         _job['last_modified'],
                         _log,
-                        _matrix_outcome_details['details']
+                        ', '.join(map(str, [x['details'] for x in
+                                            _matrix_outcome_details]))
                         if _matrix_outcome_details else None,
-                        _matrix_outcome_details['outcome']
+                        ', '.join(map(str, [x['outcome'] for x in
+                                            _matrix_outcome_details]))
                         if _matrix_outcome_details else None,
                         _matrix_general_details['webLink'],
                         _revSHA,
