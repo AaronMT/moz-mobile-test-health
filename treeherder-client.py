@@ -25,10 +25,9 @@ import ssl
 import sys
 import urllib.error
 import urllib.request as request
+from collections import OrderedDict
 from datetime import date, datetime, timedelta
 from statistics import mean
-from typing import OrderedDict
-
 
 import requests
 import xmltodict
@@ -102,7 +101,7 @@ def main():
 
     output_JSON = []
 
-    print("Fetching [{}] queries in [{}] {}".format(
+    print("\nFetching [{}] queries in [{}] {}".format(
         len(project_config.sections()), args.project,
         project_config.sections()), end='\n\n')
 
@@ -135,8 +134,7 @@ def main():
                     project=args.project,
                     job_id=_job['id']
                 )
-                for _log_url in _log:
-                    _log = _log_url['url']
+                _log = [_log_url['url'] for _log_url in _log]
 
                 # TaskCluster
                 try:
@@ -159,7 +157,8 @@ def main():
                                 _matrix_general_details = {
                                     "webLink": value[
                                         'webLinkWithoutExecutionDetails'
-                                    ]
+                                    ],
+                                    "gscPath": value['gcsPath']
                                 }
                                 _matrix_outcome_details = value['axes']
 
@@ -283,8 +282,8 @@ def main():
 
                 logger.info(
                     'Duration: {0:.0f} min {1} - {2} - '
-                    '{3}/tasks/{4} - {5} - {6} - {7} - '
-                    '{8} - {9} - {10} - {11} - {12} - {13}'.format(
+                    '{3}/tasks/{4} - {5} - {6} - [{7}] - '
+                    '[{8}] - {9} - {10} - {11} - {12} - {13}'.format(
                         (dt_obj_end - dt_obj_start).total_seconds() / 60,
                         _job['who'],
                         _job['result'],
