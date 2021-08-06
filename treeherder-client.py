@@ -27,6 +27,8 @@ import urllib.error
 import urllib.request as request
 from datetime import date, datetime, timedelta
 from statistics import mean
+from typing import OrderedDict
+
 
 import requests
 import xmltodict
@@ -176,15 +178,27 @@ def main():
                             for child in root['testsuite']:
                                 if child['@name'] != 'junit-ignored':
                                     if child['@failures'] == '1':
-                                        for testcase in child['testcase']:
-                                            if 'failure' in testcase:
-                                                _test_details.append(
-                                                    {
-                                                        'name':
-                                                        testcase['@name'],
-                                                        'result': 'failure'
-                                                    }
-                                                )
+                                        if isinstance(child['testcase'], list):
+                                            for testcase in child['testcase']:
+                                                if 'failure' in testcase:
+                                                    _test_details.append(
+                                                        {
+                                                            'name':
+                                                            testcase['@name'],
+                                                            'result': 'failure'
+                                                        }
+                                                    )
+                                        elif isinstance(child['testcase'],
+                                                        OrderedDict):
+                                            _test_details.append(
+                                                {
+                                                    'name': child['testcase']
+                                                    ['@name'],
+                                                    'result': 'failure'
+                                                }
+                                            )
+                                        else:
+                                            pass
                                     elif child['@flakes'] == '1':
                                         _test_details.append(
                                             {
