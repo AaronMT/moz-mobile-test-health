@@ -134,7 +134,7 @@ def main():
                     project=args.project,
                     job_id=_job['id']
                 )
-                _log = [_log_url['url'] for _log_url in _log]
+                _log = ' '.join([str(_log_url['url']) for _log_url in _log])
 
                 # TaskCluster
                 try:
