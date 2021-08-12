@@ -5,9 +5,10 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 '''
-Small TreeherderClient for fetching push and
+Small treeherder-client script for fetching push and
 job metadata from provided configuration and
-building a sharable dataset:
+building a sharable JSON dataset from the Treeherder API
+through the existing API client:
 
 Uses:
   - TreeHerder
@@ -57,6 +58,13 @@ def parse_args(cmdln_args):
         help='Configuration',
         required=False
     )
+    parser.add_argument(
+        '--disabled-tests',
+        default=False,
+        required=False,
+        action='store_true',
+        help='Query list of disabled tests'
+    )
 
     return parser.parse_args(args=cmdln_args)
 
@@ -69,6 +77,8 @@ def serialize_sets(obj):
 
 
 class THClient:
+    JSON_dataset, disabled_tests = ([] for i in range(2))
+
     def __init__(self):
         self.set_config()
 
@@ -98,8 +108,6 @@ def main():
         )
     except requests.exceptions.HTTPError as err:
         raise SystemExit(err)
-
-    output_JSON = []
 
     print("\nFetching [{}] queries in [{}] {}".format(
         len(project_config.sections()), args.project,
@@ -161,6 +169,24 @@ def main():
                                     "gscPath": value['gcsPath']
                                 }
                                 _matrix_outcome_details = value['axes']
+
+                        # Disabled tests (if requested)
+                        if args.disabled_tests:
+                            with request.urlopen(
+                                '{0}/{1}/{2}/public/results/{3}'.format(
+                                    config['taskcluster']['artifacts'],
+                                    _job['task_id'],
+                                    _job['retry_id'],
+                                    config['artifacts']['shards']
+                                )
+                            ) as resp:
+                                source = resp.read()
+                                x = json.loads(source)
+                                for key, value in x.items():
+                                    if (value['junit-ignored'] not in
+                                            c.disabled_tests):
+                                        c.disabled_tests.append(
+                                            value['junit-ignored'])
 
                         # JUnitReport
                         with request.urlopen(
@@ -310,7 +336,7 @@ def main():
             tests = [problem['name'] for push in dataset
                      for problem in push['problem_test_details']]
 
-            output_JSON.append(
+            c.JSON_dataset.append(
                 {
                     str(project_config[job].name): dataset,
                     'summary': {
@@ -328,19 +354,19 @@ def main():
 
             logger.info('Summary: [{}]'.format(project_config[job]['symbol']))
             logger.info('Duration average: {0:.0f} minutes'.format(
-                    output_JSON[-1]['summary']['job_duration_avg']
+                    c.JSON_dataset[-1]['summary']['job_duration_avg']
                 )
             )
             logger.info('Results: {0} \n'.format(
-                output_JSON[-1]['summary']['outcome_count']))
+                c.JSON_dataset[-1]['summary']['outcome_count']))
             print('Output written to LOG file', end='\n\n')
         else:
             print('No results found with provided config.', end='\n\n')
 
-    if output_JSON:
+    if c.JSON_dataset:
         try:
             with open('output.json', 'w') as outfile:
-                json.dump(output_JSON, outfile, indent=4)
+                json.dump(c.JSON_dataset, outfile, indent=4)
                 print('Output written to [{}]'.format(
                     outfile.name), end='\n\n')
         except OSError as err:
