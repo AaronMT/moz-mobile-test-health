@@ -70,46 +70,43 @@ def main():
                 job = (next(iter(section.values())))
                 for problem in job:
                     if problem['problem_test_details']:
-                        content.append([
-
-                            problem['problem_test_details'][0]['name'],
-
-                            {
-                                "type": "section",
-                                "text": {
-                                    "type": "mrkdwn",
-                                    "text":
-                                    "*{}* [#<{}|{}>] [<{}|task log>]"
-                                    .format(
-                                        problem['problem_test_details'][0]
-                                        ['name'],
-                                        problem['pullreq_html_url'],
-                                        problem['pullreq_html_url']
-                                        .rsplit('/', 1)[-1],
-                                        problem['task_log']
-                                    )
-                                },
-                                "accessory": {
-                                    "type": "button",
+                        for test in problem['problem_test_details']:
+                            content.append([
+                                test['name'],
+                                {
+                                    "type": "section",
                                     "text": {
-                                        "type": "plain_text",
-                                        "text": "{} {}".format(
-                                            problem['problem_test_details'][0]
-                                            ['result'], ":x:"
-                                            if problem['problem_test_details']
-                                            [0]['result']
-                                            == "failure"
-                                            else ":warning:"
+                                        "type": "mrkdwn",
+                                        "text":
+                                        "*{}* [#<{}|{}>] [<{}|task log>]"
+                                        .format(
+                                            test['name'],
+                                            problem['pullreq_html_url'],
+                                            problem['pullreq_html_url']
+                                            .rsplit('/', 1)[-1],
+                                            problem['task_log']
                                         )
                                     },
-                                    "value": "firebase",
-                                    "url":
-                                    problem['matrix_general_details']
-                                    ['webLink'],
-                                    "action_id": "button-action"
+                                    "accessory": {
+                                        "type": "button",
+                                        "text": {
+                                            "type": "plain_text",
+                                            "text": "{} {}".format(
+                                                test
+                                                ['result'], ":x:"
+                                                if test['result']
+                                                == "failure"
+                                                else ":warning:"
+                                            )
+                                        },
+                                        "value": "firebase",
+                                        "url":
+                                        problem['matrix_general_details']
+                                        ['webLink'],
+                                        "action_id": "button-action"
+                                    }
                                 }
-                            }
-                        ])
+                            ])
                 if content:
                     content = sorted(content, key=lambda x: x[0])
                     [x.__delitem__(0) for x in content]
