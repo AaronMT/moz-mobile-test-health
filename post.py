@@ -52,13 +52,14 @@ def main():
                         "type": "header",
                         "text": {
                             "type": "plain_text",
-                            "text": "{}: daily {} ({}) with {} {}"
+                            "text": "24 Hour Report of Treeherder Jobs\n"
+                                    "{}: daily {} (result: {}) with {} {}"
                             .format(
                                 section['summary']['repo'],
                                 section['summary']['job_symbol'],
                                 ":x:" if section['summary']['job_result'] ==
                                 "testfailed" else ":white_check_mark:",
-                                "flaky/failed tests" if
+                                "flaky and or failed tests" if
                                 section['summary']['job_result']
                                 == "testfailed" else "flaky tests",
                                 ':firefox-browser:' if section['summary']
