@@ -52,8 +52,8 @@ def main():
                         "type": "header",
                         "text": {
                             "type": "plain_text",
-                            "text": "24 Hour Report of Treeherder Jobs\n"
-                                    "{}: daily {} (result: {}) with {} {}"
+                            "text": "Daily Treeherder Jobs\n"
+                                    "{}: {} (result: {}) with {} {}"
                             .format(
                                 section['summary']['repo'],
                                 section['summary']['job_symbol'],
