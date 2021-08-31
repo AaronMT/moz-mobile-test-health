@@ -52,7 +52,7 @@ def main():
                         "type": "header",
                         "text": {
                             "type": "plain_text",
-                            "text": "Daily Treeherder Jobs\n"
+                            "text": "Daily Treeherder UI Test Jobs\n"
                                     "{}: {} (result: {}) with {} {}"
                             .format(
                                 section['summary']['repo'],
