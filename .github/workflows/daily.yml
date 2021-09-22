@@ -35,6 +35,7 @@ jobs:
           [ ! -e output.log ] || cat output.log
           [ ! -e output.json ] || cp output.json $JSON_FILE
           [ ! -e output.json ] || python post.py --input=output.json
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
