@@ -52,22 +52,24 @@ def main():
                         "type": "header",
                         "text": {
                             "type": "plain_text",
-                            "text": "Daily Treeherder UI Test Jobs\n"
-                                    "{}: {} (result: {}) with {} {}"
+                            "text": "Daily Treeherder UI Test Jobs {}\n"
+                                    "{}: {} (result: {}) with {}"
                             .format(
+                                ':firefox-browser:' if section['summary']
+                                ['repo'] == 'fenix'
+                                else ':refbrowser:'
+                                if section['summary']['repo']
+                                == 'reference-browser'
+                                else ':focusandroid:' if section['summary']
+                                ['repo'] == 'focus-android'
+                                else ':android:',
                                 section['summary']['repo'],
                                 section['summary']['job_symbol'],
                                 ":x:" if section['summary']['job_result'] ==
                                 "testfailed" else ":white_check_mark:",
                                 "flaky and or failed tests" if
                                 section['summary']['job_result']
-                                == "testfailed" else "flaky tests",
-                                ':firefox-browser:' if section['summary']
-                                ['repo'] == 'fenix'
-                                else ':refbrowser:'
-                                if section['summary']['repo']
-                                == 'reference-browser'
-                                else ':android:'
+                                == "testfailed" else "flaky tests"
                             )
                         }
                     }
