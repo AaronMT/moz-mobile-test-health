@@ -45,14 +45,28 @@ def main():
             dataset = json.load(data_file)
 
             for section in dataset:
-                content, header = ([] for i in range(2))
+                content, header, footer = ([] for i in range(3))
                 divider = [{"type": "divider"}]
+                footer = [
+                    {
+                        "type": "context",
+                        "elements": [
+                            {
+                                "type": "mrkdwn",
+                                "text": ":testops-notify: created by [<{}|{}>]"
+                                .format(
+                                    "https://mana.mozilla.org/wiki/x/P_zNBw",
+                                    "Mobile Test Engineering")
+                            }
+                        ]
+                    }
+                ]
                 header = [
                     {
                         "type": "header",
                         "text": {
                             "type": "plain_text",
-                            "text": "Daily Treeherder UI Test Jobs {}\n"
+                            "text": "Daily UI Test Jobs {}\n"
                                     "{}: {} (result: {}) with {}"
                             .format(
                                 ':firefox-browser:' if section['summary']
@@ -121,7 +135,8 @@ def main():
                     content = [item for sublist in content for item in sublist]
 
                     post_to_slack(
-                        {'blocks': header + divider + content + divider})
+                        {'blocks': header + divider + content + divider +
+                         footer})
                     print("Slack message posted for [{}] results".format(
                         ''.join(
                             [section['summary']['job_symbol'], '.',
