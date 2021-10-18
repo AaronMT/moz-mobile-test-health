@@ -66,9 +66,9 @@ def main():
                         "type": "header",
                         "text": {
                             "type": "plain_text",
-                            "text": "Daily UI Test Jobs {}\n"
-                                    "{}: {} (result: {}) with {}"
+                            "text": "Daily [{} {}]: [{}] (result: {}) with {}"
                             .format(
+                                section['summary']['repo'],
                                 ':firefox-browser:' if section['summary']
                                 ['repo'] == 'fenix'
                                 else ':refbrowser:'
@@ -77,7 +77,6 @@ def main():
                                 else ':focusandroid:' if section['summary']
                                 ['repo'] == 'focus-android'
                                 else ':android:',
-                                section['summary']['repo'],
                                 section['summary']['job_symbol'],
                                 ":x:" if section['summary']['job_result'] ==
                                 "testfailed" else ":white_check_mark:",
