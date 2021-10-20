@@ -66,7 +66,7 @@ def main():
                         "type": "header",
                         "text": {
                             "type": "plain_text",
-                            "text": "Daily {} {} [{}: {} w/ {}]"
+                            "text": "Daily {} {} {}: {} w/ {}"
                             .format(
                                 section['summary']['repo'],
                                 ':firefox-browser:' if section['summary']
@@ -80,9 +80,9 @@ def main():
                                 section['summary']['job_symbol'],
                                 ":x:" if section['summary']['job_result'] ==
                                 "testfailed" else ":white_check_mark:",
-                                "flaky | failed test(s)" if
+                                "flaky | failed tests" if
                                 section['summary']['job_result']
-                                == "testfailed" else "flaky test(s)"
+                                == "testfailed" else "flaky tests"
                             )
                         }
                     }
