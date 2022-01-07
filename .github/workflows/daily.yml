@@ -46,12 +46,12 @@ jobs:
         with:
           name: JSON (${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json) [zip]
           path: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json
-      - uses: google-github-actions/setup-gcloud@master
+      - uses: google-github-actions/setup-gcloud@v0
         name: Authenticate Google Cloud
         with:
           service_account_key: ${{ secrets.GCP_CREDENTIALS }}
           export_default_credentials: true
-      - uses: google-github-actions/upload-cloud-storage@main
+      - uses: google-github-actions/upload-cloud-storage@v0
         if: hashFiles('output.json') != ''
         name: Upload Artifact (json) to Google Cloud Storage
         with: 
