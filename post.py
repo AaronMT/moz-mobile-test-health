@@ -102,9 +102,13 @@ def main():
                                         "*{}* [#<{}|{}>] [<{}|task log>]"
                                         .format(
                                             test['name'],
-                                            problem['pullreq_html_url'],
                                             problem['pullreq_html_url']
-                                            .rsplit('/', 1)[-1],
+                                            if problem['pullreq_html_url']
+                                            is not None else "",
+                                            problem['pullreq_html_url']
+                                            .rsplit('/', 1)[-1]
+                                            if problem['pullreq_html_url']
+                                            is not None else "",
                                             problem['task_log']
                                         )
                                     },
