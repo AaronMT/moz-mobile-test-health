@@ -166,7 +166,7 @@ def main():
                                     "webLink": value[
                                         'webLinkWithoutExecutionDetails'
                                     ],
-                                    "gscPath": value['gcsPath']
+                                    "gcsPath": value['gcsPath']
                                 }
                                 _matrix_outcome_details = value['axes']
 
@@ -225,13 +225,24 @@ def main():
                                         else:
                                             pass
                                     elif child['@flakes'] == '1':
-                                        _test_details.append(
-                                            {
-                                                'name': child['testcase']
-                                                ['@name'],
-                                                'result': 'flaky'
-                                            }
-                                        )
+                                        if isinstance(child['testcase'], OrderedDict):
+                                            _test_details.append(
+                                                {
+                                                    'name': child['testcase']
+                                                    ['@name'],
+                                                    'result': 'flaky'
+                                                }
+                                            )
+                                        elif isinstance(child['testcase'], list):
+                                            for testcase in child['testcase']:
+                                                _test_details.append(
+                                                    {
+                                                        'name': testcase
+                                                        ['@name'],
+                                                        'result': 'flaky'
+                                                    }
+                                                )
+                                                break
                                     else:
                                         pass
                     else:
