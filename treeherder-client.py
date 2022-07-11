@@ -147,7 +147,7 @@ def main():
                 # TaskCluster
                 try:
                     # Dependent on public artifact visibility
-                    if (re.compile("^(ui-){1}.*")).search(
+                    if (re.compile("^(ui-|legacy){1}.*")).search(
                         project_config[job]['symbol']
                     ):
                         # Matrix
