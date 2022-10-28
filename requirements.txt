@@ -1,6 +1,6 @@
 certifi==2022.9.24
 chardet==5.0.0
-charset-normalizer==3.0.0
+charset-normalizer==2.1.1
 colorama==0.4.6
 commonmark==0.9.1
 crudini==0.9.3
