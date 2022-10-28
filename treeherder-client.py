@@ -150,7 +150,7 @@ def main():
                     if (re.compile("^(ui-|legacy){1}.*")).search(
                         project_config[job]['symbol']
                     ):
-                        # Matrix
+                        # Matrix (i.e, matrix_ids.json)
                         with request.urlopen(
                             '{0}/{1}/{2}/public/results/{3}'.format(
                                 config['taskcluster']['artifacts'],
@@ -164,7 +164,7 @@ def main():
                             for key, value in data.items():
                                 _matrix_general_details = {
                                     "webLink": value[
-                                        'webLinkWithoutExecutionDetails'
+                                        'webLink'
                                     ],
                                     "gcsPath": value['gcsPath']
                                 }
@@ -188,7 +188,7 @@ def main():
                                         c.disabled_tests.append(
                                             value['junit-ignored'])
 
-                        # JUnitReport
+                        # JUnitReport (i.e, JUnitReport.xml) - This should be refactored to use FullJunitReport.xml
                         with request.urlopen(
                             '{0}/{1}/{2}/public/results/{3}'.format(
                                 config['taskcluster']['artifacts'],
@@ -225,7 +225,8 @@ def main():
                                         else:
                                             pass
                                     elif child['@flakes'] == '1':
-                                        if isinstance(child['testcase'], OrderedDict):
+                                        if isinstance(child['testcase'],
+                                                      OrderedDict):
                                             _test_details.append(
                                                 {
                                                     'name': child['testcase']
@@ -233,7 +234,8 @@ def main():
                                                     'result': 'flaky'
                                                 }
                                             )
-                                        elif isinstance(child['testcase'], list):
+                                        elif isinstance(child['testcase'],
+                                                        list):
                                             for testcase in child['testcase']:
                                                 _test_details.append(
                                                     {
