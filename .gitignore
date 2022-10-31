@@ -131,3 +131,4 @@ dmypy.json
 /output.json
 /pyvenv.cfg
 /share
+lib64
