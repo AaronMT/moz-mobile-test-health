@@ -10,6 +10,10 @@ job metadata from provided configuration and
 building a sharable JSON dataset from the Treeherder API
 through the existing API client:
 
+This script is heavily tailored to the needs of the
+Mozilla Mobile Test Engineering team, and is not intended
+to be a general purpose TreeHerder client.
+
 Uses:
   - TreeHerder
   - TaskCluster
