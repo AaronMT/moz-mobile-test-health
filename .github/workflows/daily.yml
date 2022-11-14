@@ -46,7 +46,7 @@ jobs:
         with:
           name: JSON (${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json) [zip]
           path: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json
-      - uses: google-github-actions/auth@v0
+      - uses: google-github-actions/auth@v1
         name: Authenticate Google Cloud
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
