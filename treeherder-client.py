@@ -270,7 +270,7 @@ def main():
                             _job['task_id']
                         )
                     ) as resp:
-                        if resp.headers.get('Content-Description') == 'gzip':
+                        if resp.headers.get('Content-Encoding') == 'gzip':
                             source = gzip.decompress(resp.read())
                         else:
                             source = resp.read()
