@@ -22,6 +22,7 @@ Uses:
 
 import argparse
 import configparser
+import gzip
 import json
 import logging
 import os
@@ -163,7 +164,10 @@ def main():
                                 config['artifacts']['matrix']
                             )
                         ) as resp:
-                            source = resp.read()
+                            if resp.headers.get('Content-Encoding') == 'gzip':
+                                source = gzip.decompress(resp.read())
+                            else:
+                                source = resp.read()
                             data = json.loads(source)
                             for key, value in data.items():
                                 _matrix_general_details = {
@@ -184,7 +188,10 @@ def main():
                                     config['artifacts']['shards']
                                 )
                             ) as resp:
-                                source = resp.read()
+                                if resp.headers.get('Content-Encoding') == 'gzip':
+                                    source = gzip.decompress(resp.read())
+                                else:
+                                    source = resp.read()
                                 x = json.loads(source)
                                 for key, value in x.items():
                                     if (value['junit-ignored'] not in
@@ -201,7 +208,10 @@ def main():
                                 config['artifacts']['report']
                             )
                         ) as resp:
-                            source = resp.read()
+                            if resp.headers.get('Content-Encoding') == 'gzip':
+                                source = gzip.decompress(resp.read())
+                            else:
+                                source = resp.read()
                             data = xmltodict.parse(source)
                             root = data['testsuites']
                             for child in root['testsuite']:
@@ -260,7 +270,10 @@ def main():
                             _job['task_id']
                         )
                     ) as resp:
-                        source = resp.read()
+                        if resp.headers.get('Content-Description') == 'gzip':
+                            source = gzip.decompress(resp.read())
+                        else:
+                            source = resp.read()
                         data = json.loads(source)
                         _revSHA = data['payload']['env']['MOBILE_HEAD_REV']
                 except urllib.error.URLError as err:
