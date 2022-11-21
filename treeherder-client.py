@@ -123,10 +123,11 @@ def main():
 
         print('Fetching result [{0}] in [{1}] ({2} max pushes) from'
               ' the past [{3}] day(s) ...'.format(
-                project_config[job]['result'],
-                project_config[job]['symbol'],
-                config['pushes']['maxcount'],
-                config['pushes']['days']), end='\n')
+                  project_config[job]['result'],
+                  project_config[job]['symbol'],
+                  config['pushes']['maxcount'],
+                  config['pushes']['days']), end='\n'
+              )
 
         for _push in sorted(p, key=lambda push: push['id']):
             jobs = c.client.get_jobs(
@@ -266,9 +267,9 @@ def main():
 
                     # TaskCluster: payload mobile revision
                     with request.urlopen('{0}/api/queue/v1/task/{1}/'.format(
-                            config['taskcluster']['host'],
-                            _job['task_id']
-                        )
+                        config['taskcluster']['host'],
+                        _job['task_id']
+                    )
                     ) as resp:
                         if resp.headers.get('Content-Encoding') == 'gzip':
                             source = gzip.decompress(resp.read())
@@ -375,17 +376,16 @@ def main():
                         'job_result': project_config[job]['result'],
                         'job_duration_avg': round(mean(durations), 2),
                         'outcome_count': len(outcomes),
-                        'duplicates': json.dumps(set(
-                            [x for x in tests if tests.count(x) > 1]
-                            ), default=serialize_sets)
+                        'duplicates': json.dumps(
+                            set([x for x in tests if tests.count(x) > 1]), default=serialize_sets
+                        )
                     }
                 }
             )
 
             logger.info('Summary: [{}]'.format(project_config[job]['symbol']))
             logger.info('Duration average: {0:.0f} minutes'.format(
-                    c.JSON_dataset[-1]['summary']['job_duration_avg']
-                )
+                c.JSON_dataset[-1]['summary']['job_duration_avg'])
             )
             logger.info('Results: {0} \n'.format(
                 c.JSON_dataset[-1]['summary']['outcome_count']))
