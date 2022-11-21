@@ -11,8 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.9]
-        configuration: [fenix, reference-browser, android-components, focus-android]
+        python-version: [3.11.0]
+        configuration: [firefox-android]
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
