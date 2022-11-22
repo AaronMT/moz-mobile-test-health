@@ -26,11 +26,10 @@ import logging
 import os
 import re
 import ssl
-import urllib.error
-import urllib.request as request
 from datetime import datetime
 from statistics import mean
 
+from github import Github
 from junitparser import Attr, Failure, JUnitXml, TestSuite
 
 from lib.treeherder import TreeherderHelper
@@ -48,6 +47,30 @@ def serialize_sets(obj):
     return obj
 
 
+def get_json(url, params=None):
+    from urllib.parse import urlencode
+    from urllib.request import urlopen
+
+    if params is not None:
+        url += "?" + urlencode(params)
+
+    r = urlopen(url)
+
+    return json.loads(gzip.decompress(r.read()) if r.headers.get('Content-Encoding') == 'gzip' else r.read())
+
+
+def get_xml(url, params=None):
+    from urllib.parse import urlencode
+    from urllib.request import urlopen
+
+    if params is not None:
+        url += "?" + urlencode(params)
+
+    r = urlopen(url)
+
+    return JUnitXml.fromstring(gzip.decompress(r.read()) if r.headers.get('Content-Encoding') == 'gzip' else r.read())
+
+
 class _TestSuite(TestSuite):
     flakes = Attr()
 
@@ -60,9 +83,9 @@ class databuilder:
     def build_complete_dataset(self, args):
 
         client = TreeherderHelper(args.project)
+        github = Github(os.environ.get('GITHUB_TOKEN'))
         pushes = client.get_pushes()
         results, disabled_tests = ([] for i in range(2))
-        global _github_details
 
         print(f"\nFetching [{len(client.global_configuration.sections())}] in [{args.project}] {client.project_configuration.sections()}", end='\n\n')
 
@@ -92,6 +115,7 @@ class databuilder:
                     _test_details = []
                     _revSHA = None
 
+                    # Fetch the log URL for the current job
                     _log = client.get_client().get_job_log_url(
                         project=args.project,
                         job_id=_job['id']
@@ -105,119 +129,91 @@ class databuilder:
                             client.project_configuration[job]['symbol']
                         ):
                             # Matrix (i.e, matrix_ids.json) generated from Flank
-                            with request.urlopen(
+                            matrix_artifact = get_json(
                                 '{0}/{1}/{2}/public/results/{3}'.format(
                                     client.global_configuration['taskcluster']['artifacts'],
                                     _job['task_id'],
                                     _job['retry_id'],
                                     client.global_configuration['artifacts']['matrix']
                                 )
-                            ) as resp:
-                                data = json.loads(
-                                    gzip.decompress(resp.read()) if resp.headers.get('Content-Encoding') == 'gzip' else resp.read()
-                                )
-                                for key, value in data.items():
-                                    _matrix_general_details = {
-                                        "webLink": value['webLink'],
-                                        "gcsPath": value['gcsPath']
-                                    }
-                                    _matrix_outcome_details = value['axes']
+                            )
+                            for key, value in matrix_artifact.items():
+                                _matrix_general_details = {
+                                    "webLink": value['webLink'],
+                                    "gcsPath": value['gcsPath']
+                                }
+                                _matrix_outcome_details = value['axes']
 
-                            # Disabled tests (if requested) [TODO: output to file]
+                            # Disabled tests (if requested) [TODO: append to dataset or output to file]
                             if args.disabled_tests:
-                                with request.urlopen(
+                                shard_artifact = get_json(
                                     '{0}/{1}/{2}/public/results/{3}'.format(
-                                        client.global_configuration
-                                        ['taskcluster']['artifacts'],
+                                        client.global_configuration['taskcluster']['artifacts'],
                                         _job['task_id'],
                                         _job['retry_id'],
-                                        client.global_configuration
-                                        ['artifacts']['shards']
+                                        client.global_configuration['artifacts']['shards']
                                     )
-                                ) as resp:
-                                    data = json.loads(
-                                        gzip.decompress(resp.read()) if resp.headers.get('Content-Encoding') == 'gzip' else resp.read()
-                                    )
-                                    for key, value in data.items():
-                                        if (value['junit-ignored'] not in
-                                                disabled_tests):
-                                            disabled_tests.append(
-                                                value['junit-ignored'])
+                                )
+                                for key, value in shard_artifact.items():
+                                    if (value['junit-ignored'] not in
+                                            disabled_tests):
+                                        disabled_tests.append(
+                                            value['junit-ignored'])
+                            else:
+                                pass
 
                             # JUnitReport (i.e, FullJUnitReport.xml)
-                            with request.urlopen(
+                            report_artifact = get_xml(
                                 '{0}/{1}/{2}/public/results/{3}'.format(
-                                    client.global_configuration['taskcluster']
-                                    ['artifacts'],
+                                    client.global_configuration['taskcluster']['artifacts'],
                                     _job['task_id'],
                                     _job['retry_id'],
-                                    client.global_configuration['artifacts']
-                                    ['report']
+                                    client.global_configuration['artifacts']['report']
                                 )
-                            ) as resp:
-                                data = JUnitXml.fromstring(
-                                    gzip.decompress(resp.read()) if resp.headers.get('Content-Encoding') == 'gzip' else resp.read()
-                                )
-                                for suite in data:
-                                    cur_suite = _TestSuite.fromelem(suite)
-                                    if cur_suite.flakes == '1':
-                                        for case in suite:
-                                            # TOOD: Should I check for flaky=true?
-                                            if case.result:
+                            )
+                            for suite in report_artifact:
+                                cur_suite = _TestSuite.fromelem(suite)
+                                if cur_suite.flakes == '1':
+                                    for case in suite:
+                                        # TODO: Should I check for flaky=true?
+                                        if case.result:
+                                            _test_details.append({
+                                                'name': case.name,
+                                                'result': 'flaky',
+                                            })
+                                else:
+                                    for case in suite:
+                                        for entry in case.result:
+                                            if isinstance(entry, Failure):
                                                 _test_details.append({
                                                     'name': case.name,
-                                                    'result': 'flaky',
+                                                    'result': 'failure',
                                                 })
-                                    else:
-                                        for case in suite:
-                                            for entry in case.result:
-                                                if isinstance(entry, Failure):
-                                                    _test_details.append({
-                                                        'name': case.name,
-                                                        'result': 'failure',
-                                                    })
-                                                break
+                                            break
                         else:
                             pass
 
                         # TaskCluster: payload mobile revision
-                        with request.urlopen('{0}/api/queue/v1/task/{1}/'.format(
-                            client.global_configuration['taskcluster']['host'],
-                            _job['task_id'])
-                        ) as resp:
-                            data = json.loads(
-                                gzip.decompress(resp.read()) if resp.headers.get('Content-Encoding') == 'gzip' else resp.read()
+                        tc_artifact = get_json(
+                            '{0}/api/queue/v1/task/{1}'.format(
+                                client.global_configuration['taskcluster']['host'],
+                                _job['task_id']
                             )
-                            _revSHA = data['payload']['env']['MOBILE_HEAD_REV']
-                    except urllib.error.URLError as err:
+                        )
+                        _revSHA = tc_artifact['payload']['env']['MOBILE_HEAD_REV']
+
+                    except Exception as err:
                         print(f"Artifact(s) not available for {_job['task_id']}")
                         raise SystemExit(err)
 
-                    # Github
-                    try:
-                        with request.urlopen(
-                            request.Request(
-                                url='{0}/commits/{1}/pulls'.format(
-                                    client.global_configuration['project']['url'],
-                                    _revSHA
-                                ),
-                                headers={
-                                    'Accept':
-                                    'application/vnd.github+json',
-                                    'Authorization':
-                                    'token %s' % os.environ.get('GITHUB_TOKEN')
-                                }
-                            )
-                        ) as resp:
-                            source = resp.read()
-                            _github_data = json.loads(source)
-                            for _data in _github_data:
-                                _github_details = _data
-                    except urllib.error.URLError as err:
-                        print(f"Github API error: {err}")
-                        raise SystemExit(err)
+                    # Github (pull request data)
+                    repo = github.get_repo(client.global_configuration['project']['repo'])
+                    commit = repo.get_commit(_revSHA)
 
-                    # Stitch together dataset from TaskCluster and Github
+                    for pull in commit.get_pulls():
+                        _github_details = {'html_url': pull.html_url, 'title': pull.title}
+
+                    # Stitch together dataset from TaskCluster and Github results
                     dt_obj_start = datetime.fromtimestamp(_job['start_timestamp'])
                     dt_obj_end = datetime.fromtimestamp(_job['end_timestamp'])
 
