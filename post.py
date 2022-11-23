@@ -148,10 +148,7 @@ def main():
                 else:
                     print("No failures or intermittents in ({}) in [{}]. "
                           "No Slack message posted.".
-                          format(
-                            next(iter(section)),
-                            section['summary']['job_symbol']
-                          ), end='\n')
+                          format(next(iter(section)), section['summary']['job_symbol']), end='\n')
     except OSError as e:
         print(e)
         sys.exit(1)
