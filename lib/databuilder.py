@@ -76,6 +76,7 @@ class databuilder:
         pass
 
     def build_complete_dataset(self, args):
+        from urllib.parse import urlparse
 
         client = TreeherderHelper(args.project)
         queue = Queue({'rootUrl': client.global_configuration['taskcluster']['host']})
@@ -104,7 +105,6 @@ class databuilder:
                     result=client.project_configuration[job]['result'],
                     job_group_symbol=client.project_configuration[job]['group_symbol'],
                     who=client.global_configuration['filters']['author']
-
                 )
                 for _job in jobs:
                     _matrix_outcome_details = None
@@ -165,6 +165,8 @@ class databuilder:
                                     client.global_configuration['artifacts']['report']
                                 )['url']
                             )
+
+                            # Extract the test details from the FullJUnitReport
                             for suite in report_artifact:
                                 cur_suite = _TestSuite.fromelem(suite)
                                 if cur_suite.flakes == '1':
@@ -192,7 +194,9 @@ class databuilder:
                         raise SystemExit(err)
 
                     # Github (pull request data)
-                    repo = github.get_repo(client.global_configuration['project']['repo'])
+                    repo = github.get_repo(
+                        urlparse(queue.task(_job['task_id'])['payload']['env']['MOBILE_HEAD_REPOSITORY']).path.strip("/")
+                    )
                     commit = repo.get_commit(queue.task(_job['task_id'])['payload']['env']['MOBILE_HEAD_REV'])
 
                     for pull in commit.get_pulls():
@@ -249,8 +253,10 @@ class databuilder:
                             _matrix_general_details['webLink'],
                             commit.sha,
                             _test_details,
-                            _github_details['html_url'] if _github_details else None,
-                            _github_details['title'] if _github_details else None
+                            _github_details['html_url'] if
+                            _github_details else None,
+                            _github_details['title'] if
+                            _github_details else None
                         )
                     )
 
