@@ -31,6 +31,7 @@ from statistics import mean
 
 from github import Github
 from junitparser import Attr, Failure, JUnitXml, TestSuite
+from taskcluster import Queue
 
 from lib.treeherder import TreeherderHelper
 
@@ -47,7 +48,7 @@ def serialize_sets(obj):
     return obj
 
 
-def get_json(url, params=None):
+def get_artifact(url, params=None):
     from urllib.parse import urlencode
     from urllib.request import urlopen
 
@@ -56,19 +57,13 @@ def get_json(url, params=None):
 
     r = urlopen(url)
 
-    return json.loads(gzip.decompress(r.read()) if r.headers.get('Content-Encoding') == 'gzip' else r.read())
-
-
-def get_xml(url, params=None):
-    from urllib.parse import urlencode
-    from urllib.request import urlopen
-
-    if params is not None:
-        url += "?" + urlencode(params)
-
-    r = urlopen(url)
-
-    return JUnitXml.fromstring(gzip.decompress(r.read()) if r.headers.get('Content-Encoding') == 'gzip' else r.read())
+    match r.headers.get('Content-Type'):
+        case 'application/json':
+            return json.loads(gzip.decompress(r.read()) if r.headers.get('Content-Encoding') == 'gzip' else r.read())
+        case 'application/xml':
+            return JUnitXml.fromstring(gzip.decompress(r.read()) if r.headers.get('Content-Encoding') == 'gzip' else r.read())
+        case _:
+            SystemError('Unknown artifact type')
 
 
 class _TestSuite(TestSuite):
@@ -83,6 +78,7 @@ class databuilder:
     def build_complete_dataset(self, args):
 
         client = TreeherderHelper(args.project)
+        queue = Queue({'rootUrl': client.global_configuration['taskcluster']['host']})
         github = Github(os.environ.get('GITHUB_TOKEN'))
         pushes = client.get_pushes()
         results, disabled_tests = ([] for i in range(2))
@@ -113,7 +109,6 @@ class databuilder:
                 for _job in jobs:
                     _matrix_outcome_details = None
                     _test_details = []
-                    _revSHA = None
 
                     # Fetch the log URL for the current job
                     _log = client.get_client().get_job_log_url(
@@ -129,14 +124,14 @@ class databuilder:
                             client.project_configuration[job]['symbol']
                         ):
                             # Matrix (i.e, matrix_ids.json) generated from Flank
-                            matrix_artifact = get_json(
-                                '{0}/{1}/{2}/public/results/{3}'.format(
-                                    client.global_configuration['taskcluster']['artifacts'],
+                            matrix_artifact = get_artifact(
+                                queue.artifact(
                                     _job['task_id'],
                                     _job['retry_id'],
                                     client.global_configuration['artifacts']['matrix']
-                                )
+                                )['url']
                             )
+
                             for key, value in matrix_artifact.items():
                                 _matrix_general_details = {
                                     "webLink": value['webLink'],
@@ -146,14 +141,14 @@ class databuilder:
 
                             # Disabled tests (if requested) [TODO: append to dataset or output to file]
                             if args.disabled_tests:
-                                shard_artifact = get_json(
-                                    '{0}/{1}/{2}/public/results/{3}'.format(
-                                        client.global_configuration['taskcluster']['artifacts'],
+                                shard_artifact = get_artifact(
+                                    queue.artifact(
                                         _job['task_id'],
                                         _job['retry_id'],
                                         client.global_configuration['artifacts']['shards']
-                                    )
+                                    )['url']
                                 )
+
                                 for key, value in shard_artifact.items():
                                     if (value['junit-ignored'] not in
                                             disabled_tests):
@@ -163,13 +158,12 @@ class databuilder:
                                 pass
 
                             # JUnitReport (i.e, FullJUnitReport.xml)
-                            report_artifact = get_xml(
-                                '{0}/{1}/{2}/public/results/{3}'.format(
-                                    client.global_configuration['taskcluster']['artifacts'],
+                            report_artifact = get_artifact(
+                                queue.artifact(
                                     _job['task_id'],
                                     _job['retry_id'],
                                     client.global_configuration['artifacts']['report']
-                                )
+                                )['url']
                             )
                             for suite in report_artifact:
                                 cur_suite = _TestSuite.fromelem(suite)
@@ -193,22 +187,13 @@ class databuilder:
                         else:
                             pass
 
-                        # TaskCluster: payload mobile revision
-                        tc_artifact = get_json(
-                            '{0}/api/queue/v1/task/{1}'.format(
-                                client.global_configuration['taskcluster']['host'],
-                                _job['task_id']
-                            )
-                        )
-                        _revSHA = tc_artifact['payload']['env']['MOBILE_HEAD_REV']
-
                     except Exception as err:
                         print(f"Artifact(s) not available for {_job['task_id']}")
                         raise SystemExit(err)
 
                     # Github (pull request data)
                     repo = github.get_repo(client.global_configuration['project']['repo'])
-                    commit = repo.get_commit(_revSHA)
+                    commit = repo.get_commit(queue.task(_job['task_id'])['payload']['env']['MOBILE_HEAD_REV'])
 
                     for pull in commit.get_pulls():
                         _github_details = {'html_url': pull.html_url, 'title': pull.title}
@@ -236,7 +221,7 @@ class databuilder:
                         'task_log': _log,
                         'matrix_general_details': _matrix_general_details,
                         'matrix_outcome_details': _matrix_outcome_details,
-                        'revision': _revSHA,
+                        'revision': commit.sha,
                         'pullreq_html_url': _github_details['html_url']
                         if _github_details else None,
                         'pullreq_html_title': _github_details['title']
@@ -262,7 +247,7 @@ class databuilder:
                                                 _matrix_outcome_details]))
                             if _matrix_outcome_details else None,
                             _matrix_general_details['webLink'],
-                            _revSHA,
+                            commit.sha,
                             _test_details,
                             _github_details['html_url'] if _github_details else None,
                             _github_details['title'] if _github_details else None
