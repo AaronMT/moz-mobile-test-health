@@ -59,9 +59,9 @@ def get_artifact(url, params=None):
 
     match r.headers.get('Content-Type'):
         case 'application/json':
-            return json.loads(gzip.decompress(r.read()) if r.headers.get('Content-Encoding') == 'gzip' else r.read())
+            return json.loads(gzip.decompress(r.read()))
         case 'application/xml':
-            return JUnitXml.fromstring(gzip.decompress(r.read()) if r.headers.get('Content-Encoding') == 'gzip' else r.read())
+            return JUnitXml.fromstring(gzip.decompress(r.read()))
         case _:
             SystemError('Unknown artifact type')
 
@@ -79,9 +79,9 @@ class databuilder:
         from urllib.parse import urlparse
 
         client = TreeherderHelper(args.project)
-        queue = Queue({'rootUrl': client.global_configuration['taskcluster']['host']})
         github = Github(os.environ.get('GITHUB_TOKEN'))
         pushes = client.get_pushes()
+        queue = Queue({'rootUrl': client.global_configuration['taskcluster']['host']})
         results, disabled_tests = ([] for i in range(2))
 
         print(f"\nFetching [{len(client.global_configuration.sections())}] in [{args.project}] {client.project_configuration.sections()}", end='\n\n')
@@ -108,7 +108,9 @@ class databuilder:
                 )
                 for _job in jobs:
                     _matrix_outcome_details = None
+                    _matrix_general_details = {}
                     _test_details = []
+                    _github_details = None
 
                     # Fetch the log URL for the current job
                     _log = client.get_client().get_job_log_url(
@@ -132,12 +134,13 @@ class databuilder:
                                 )['url']
                             )
 
-                            for key, value in matrix_artifact.items():
-                                _matrix_general_details = {
-                                    "webLink": value['webLink'],
-                                    "gcsPath": value['gcsPath']
-                                }
-                                _matrix_outcome_details = value['axes']
+                            if matrix_artifact is not None:
+                                for key, value in matrix_artifact.items():
+                                    _matrix_general_details = {
+                                        "webLink": value['webLink'],
+                                        "gcsPath": value['gcsPath']
+                                    }
+                                    _matrix_outcome_details = value['axes']
 
                             # Disabled tests (if requested) [TODO: append to dataset or output to file]
                             if args.disabled_tests:
@@ -149,11 +152,12 @@ class databuilder:
                                     )['url']
                                 )
 
-                                for key, value in shard_artifact.items():
-                                    if (value['junit-ignored'] not in
-                                            disabled_tests):
-                                        disabled_tests.append(
-                                            value['junit-ignored'])
+                                if shard_artifact is not None:
+                                    for key, value in shard_artifact.items():
+                                        if (value['junit-ignored'] not in
+                                                disabled_tests):
+                                            disabled_tests.append(
+                                                value['junit-ignored'])
                             else:
                                 pass
 
@@ -167,25 +171,26 @@ class databuilder:
                             )
 
                             # Extract the test details from the FullJUnitReport
-                            for suite in report_artifact:
-                                cur_suite = _TestSuite.fromelem(suite)
-                                if cur_suite.flakes == '1':
-                                    for case in suite:
-                                        # TODO: Should I check for flaky=true?
-                                        if case.result:
-                                            _test_details.append({
-                                                'name': case.name,
-                                                'result': 'flaky',
-                                            })
-                                else:
-                                    for case in suite:
-                                        for entry in case.result:
-                                            if isinstance(entry, Failure):
+                            if report_artifact is not None:
+                                for suite in report_artifact:
+                                    cur_suite = _TestSuite.fromelem(suite)
+                                    if cur_suite.flakes == '1':
+                                        for case in suite:
+                                            # TODO: Should I check for flaky=true?
+                                            if case.result:
                                                 _test_details.append({
                                                     'name': case.name,
-                                                    'result': 'failure',
+                                                    'result': 'flaky',
                                                 })
-                                            break
+                                    else:
+                                        for case in suite:
+                                            for entry in case.result:
+                                                if isinstance(entry, Failure):
+                                                    _test_details.append({
+                                                        'name': case.name,
+                                                        'result': 'failure',
+                                                    })
+                                                break
                         else:
                             pass
 

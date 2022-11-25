@@ -37,6 +37,32 @@ def post_to_slack(data):
     requests.post(webhook_url, json=data)
 
 
+def getSlackmoji(repo):
+    match repo:
+        case 'android-components' | 'firefox-android':
+            return ':android:'
+        case 'focus-android':
+            return ':focusandroid:'
+        case 'fenix':
+            return ':firefox-browser:'
+        case 'flaky':
+            return ':warning:'
+        case 'reference-browser':
+            return ':refbrowser:'
+        case 'success':
+            return ':white_check_mark:'
+        case 'testfailed' | 'failure':
+            return ':x:'
+
+
+def getHeaderResultText(text):
+    match text:
+        case 'testfailed':
+            return 'flaky | failed tests'
+        case 'success':
+            return 'flaky tests'
+
+
 def main():
     args = parse_args(sys.argv[1:])
 
@@ -47,6 +73,22 @@ def main():
             for section in dataset:
                 content, header, footer = ([] for i in range(3))
                 divider = [{"type": "divider"}]
+                header = [
+                    {
+                        "type": "header",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Daily {} {} {}: {} w/ {}"
+                            .format(
+                                section['summary']['repo'],
+                                getSlackmoji(section['summary']['repo']),
+                                section['summary']['job_symbol'],
+                                getSlackmoji(section['summary']['job_result']),
+                                getHeaderResultText(section['summary']['job_result'])
+                            )
+                        }
+                    }
+                ]
                 footer = [
                     {
                         "type": "context",
@@ -59,32 +101,6 @@ def main():
                                     "Mobile Test Engineering")
                             }
                         ]
-                    }
-                ]
-                header = [
-                    {
-                        "type": "header",
-                        "text": {
-                            "type": "plain_text",
-                            "text": "Daily {} {} {}: {} w/ {}"
-                            .format(
-                                section['summary']['repo'],
-                                ':firefox-browser:' if section['summary']
-                                ['repo'] == 'fenix'
-                                else ':refbrowser:'
-                                if section['summary']['repo']
-                                == 'reference-browser'
-                                else ':focusandroid:' if section['summary']
-                                ['repo'] == 'focus-android'
-                                else ':android:',
-                                section['summary']['job_symbol'],
-                                ":x:" if section['summary']['job_result'] ==
-                                "testfailed" else ":white_check_mark:",
-                                "flaky | failed tests" if
-                                section['summary']['job_result']
-                                == "testfailed" else "flaky tests"
-                            )
-                        }
                     }
                 ]
 
@@ -117,11 +133,8 @@ def main():
                                         "text": {
                                             "type": "plain_text",
                                             "text": "{} {}".format(
-                                                test
-                                                ['result'], ":x:"
-                                                if test['result']
-                                                == "failure"
-                                                else ":warning:"
+                                                test['result'],
+                                                getSlackmoji(test['result'])
                                             )
                                         },
                                         "value": "firebase",
@@ -137,14 +150,12 @@ def main():
                     [x.__delitem__(0) for x in content]
                     content = [item for sublist in content for item in sublist]
 
-                    post_to_slack(
-                        {'blocks': header + divider + content + divider +
-                         footer})
+                    post_to_slack({'blocks': header + divider + content + divider + footer})
+
                     print("Slack message posted for [{}] results".format(
                         ''.join(
                             [section['summary']['job_symbol'], '.',
                              section['summary']['job_result']])), end="\n")
-
                 else:
                     print("No failures or intermittents in ({}) in [{}]. "
                           "No Slack message posted.".
