@@ -45,9 +45,9 @@ def parse_args():
 
 
 def main():
-    from lib.databuilder import databuilder
+    from lib.databuilder import data_builder
     args = parse_args()
-    data_builder = databuilder()
+    data_builder = data_builder()
     data_builder.build_complete_dataset(args)
 
 
