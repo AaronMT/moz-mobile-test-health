@@ -23,7 +23,7 @@ class Treeherder:
         self.client = self.set_client()
 
     def get_global_config(self):
-        return TreeherderConfig.read_global_config(self)
+        return TreeherderConfig.read_global_config(self)  # type: ignore
 
     def set_client(self):
         return self.create_client()
@@ -58,7 +58,7 @@ class TreeherderConfig:
     '''TreeherderConfig class for reading from INI config file'''
 
     def __init__(self):
-        self.config = self.read_config()
+        pass
 
     def read_global_config(self):
         import configparser

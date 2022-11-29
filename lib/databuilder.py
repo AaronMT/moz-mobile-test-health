@@ -35,8 +35,6 @@ from taskcluster import Queue
 
 from lib.treeherder import TreeherderHelper
 
-ssl._create_default_https_context = ssl._create_unverified_context
-
 logging.basicConfig(filename='output.log', filemode='w', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -55,13 +53,13 @@ def get_artifact(url, params=None):
     if params is not None:
         url += "?" + urlencode(params)
 
-    r = urlopen(url)
+    response = urlopen(url, context=ssl._create_unverified_context())
 
-    match r.headers.get('Content-Type'):
+    match response.headers.get('Content-Type'):
         case 'application/json':
-            return json.loads(gzip.decompress(r.read()))
+            return json.loads(gzip.decompress(response.read()))
         case 'application/xml':
-            return JUnitXml.fromstring(gzip.decompress(r.read()))
+            return JUnitXml.fromstring(gzip.decompress(response.read()))
         case _:
             SystemError('Unknown artifact type')
 
@@ -70,7 +68,7 @@ class _TestSuite(TestSuite):
     flakes = Attr()
 
 
-class databuilder:
+class data_builder:
 
     def __init__(self):
         pass
@@ -135,7 +133,7 @@ class databuilder:
                             )
 
                             if matrix_artifact is not None:
-                                for key, value in matrix_artifact.items():
+                                for value in matrix_artifact.values():
                                     _matrix_general_details = {
                                         "webLink": value['webLink'],
                                         "gcsPath": value['gcsPath']
@@ -153,7 +151,7 @@ class databuilder:
                                 )
 
                                 if shard_artifact is not None:
-                                    for key, value in shard_artifact.items():
+                                    for value in shard_artifact.values():
                                         if (value['junit-ignored'] not in
                                                 disabled_tests):
                                             disabled_tests.append(
@@ -176,7 +174,7 @@ class databuilder:
                                     cur_suite = _TestSuite.fromelem(suite)
                                     if cur_suite.flakes == '1':
                                         for case in suite:
-                                            # TODO: Should I check for flaky=true?
+                                            # Should I check for flaky=true?
                                             if case.result:
                                                 _test_details.append({
                                                     'name': case.name,
@@ -196,7 +194,7 @@ class databuilder:
 
                     except Exception as err:
                         print(f"Artifact(s) not available for {_job['task_id']}")
-                        raise SystemExit(err)
+                        raise SystemExit(err) from err
 
                     # Github (pull request data)
                     repo = github.get_repo(
@@ -274,6 +272,7 @@ class databuilder:
                         str(client.project_configuration[job].name): dataset,
                         'summary': {
                             'repo': args.project,
+                            'project': client.project_configuration[job]['project'],
                             'job_symbol': client.project_configuration[job]['symbol'],
                             'job_result': client.project_configuration[job]['result'],
                             'job_duration_avg': round(mean(durations), 2),
@@ -284,18 +283,17 @@ class databuilder:
                     }
                 )
 
-                logger.info('Summary: [{}]'.format(client.project_configuration[job]['symbol']))
+                logger.info('Summary: [%s]', client.project_configuration[job]['symbol'])
                 logger.info('Duration average: {0:.0f} minutes'.format(results[-1]['summary']['job_duration_avg']))
-                logger.info('Results: {0} \n'.format(results[-1]['summary']['outcome_count']))
+                logger.info('Results: %s \n', results[-1]['summary']['outcome_count'])
                 print('Output written to LOG file', end='\n\n')
-        else:
-            print('No results found with provided config.', end='\n\n')
+            else:
+                print('No results found with provided config.', end='\n\n')
 
         if results:
             try:
-                with open('output.json', 'w') as outfile:
+                with open('output.json', 'w', encoding='utf-8') as outfile:
                     json.dump(results, outfile, indent=4)
-                    print('Output written to [{}]'.format(
-                        outfile.name), end='\n\n')
+                    print(f'Output written to [{outfile.name}] \n')
             except OSError as err:
-                raise SystemExit(err)
+                raise SystemExit(err) from err

@@ -34,11 +34,17 @@ def parse_args(cmdln_args):
 
 def post_to_slack(data):
     webhook_url = os.environ['SLACK_WEBHOOK']
-    requests.post(webhook_url, json=data)
+
+    try:
+        requests.post(webhook_url, json=data, timeout=15)
+    except requests.Timeout:
+        pass
+    except requests.ConnectionError:
+        pass
 
 
-def getSlackmoji(repo):
-    match repo:
+def get_slack_emoji(query):
+    match query:
         case 'android-components' | 'firefox-android':
             return ':android:'
         case 'focus-android':
@@ -55,7 +61,7 @@ def getSlackmoji(repo):
             return ':x:'
 
 
-def getHeaderResultText(text):
+def get_header_result_text(text):
     match text:
         case 'testfailed':
             return 'flaky | failed tests'
@@ -67,7 +73,7 @@ def main():
     args = parse_args(sys.argv[1:])
 
     try:
-        with open(args.input) as data_file:
+        with open(args.input, encoding='utf-8') as data_file:
             dataset = json.load(data_file)
 
             for section in dataset:
@@ -81,10 +87,10 @@ def main():
                             "text": "Daily {} {} {}: {} w/ {}"
                             .format(
                                 section['summary']['repo'],
-                                getSlackmoji(section['summary']['repo']),
+                                get_slack_emoji(section['summary']['repo']),
                                 section['summary']['job_symbol'],
-                                getSlackmoji(section['summary']['job_result']),
-                                getHeaderResultText(section['summary']['job_result'])
+                                get_slack_emoji(section['summary']['job_result']),
+                                get_header_result_text(section['summary']['job_result'])
                             )
                         }
                     }
@@ -134,7 +140,7 @@ def main():
                                             "type": "plain_text",
                                             "text": "{} {}".format(
                                                 test['result'],
-                                                getSlackmoji(test['result'])
+                                                get_slack_emoji(test['result'])
                                             )
                                         },
                                         "value": "firebase",
@@ -152,17 +158,12 @@ def main():
 
                     post_to_slack({'blocks': header + divider + content + divider + footer})
 
-                    print("Slack message posted for [{}] results".format(
-                        ''.join(
-                            [section['summary']['job_symbol'], '.',
-                             section['summary']['job_result']])), end="\n")
+                    print(f"Slack message posted for [{section['summary']['job_symbol']}] with results [{section['summary']['job_result']}]")
                 else:
-                    print("No failures or intermittents in ({}) in [{}]. "
-                          "No Slack message posted.".
-                          format(next(iter(section)), section['summary']['job_symbol']), end='\n')
-    except OSError as e:
-        print(e)
-        sys.exit(1)
+                    print(f"No Slack message posted for [{next(iter(section))}] in [{section['summary']['job_symbol']}]")
+
+    except OSError as err:
+        raise SystemExit(err) from err
 
 
 if __name__ == '__main__':
