@@ -33,10 +33,10 @@ def parse_args(cmdln_args):
 
 
 def post_to_slack(data):
-    webhook_url = os.environ['SLACK_WEBHOOK']
+    webhook_url = os.environ.get('SLACK_WEBHOOK')
 
     try:
-        requests.post(webhook_url, json=data, timeout=15)
+        requests.post(url=str(webhook_url), json=data, timeout=15)
     except requests.Timeout:
         pass
     except requests.ConnectionError:

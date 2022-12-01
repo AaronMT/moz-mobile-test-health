@@ -53,7 +53,7 @@ def get_artifact(url, params=None):
     if params is not None:
         url += "?" + urlencode(params)
 
-    response = urlopen(url, context=ssl._create_unverified_context())
+    response = urlopen(url=url, context=ssl._create_unverified_context())
 
     match response.headers.get('Content-Type'):
         case 'application/json':
@@ -82,7 +82,7 @@ class data_builder:
         queue = Queue({'rootUrl': client.global_configuration['taskcluster']['host']})
         results, disabled_tests = ([] for i in range(2))
 
-        print(f"\nFetching [{len(client.global_configuration.sections())}] in [{args.project}] {client.project_configuration.sections()}", end='\n\n')
+        print(f"\nFetching [{len(client.project_configuration.sections())}] in [{args.project}] {client.project_configuration.sections()}", end='\n\n')
 
         for job in client.project_configuration.sections():
             durations, outcomes, dataset = ([] for i in range(3))
@@ -170,7 +170,7 @@ class data_builder:
 
                             # Extract the test details from the FullJUnitReport
                             if report_artifact is not None:
-                                for suite in report_artifact:
+                                for suite in report_artifact:  # pylint: disable=not-an-iterable
                                     cur_suite = _TestSuite.fromelem(suite)
                                     if cur_suite.flakes == '1':
                                         for case in suite:
@@ -200,10 +200,13 @@ class data_builder:
                     repo = github.get_repo(
                         urlparse(queue.task(_job['task_id'])['payload']['env']['MOBILE_HEAD_REPOSITORY']).path.strip("/")
                     )
-                    commit = repo.get_commit(queue.task(_job['task_id'])['payload']['env']['MOBILE_HEAD_REV'])
+                    commit = repo.get_commit(
+                        queue.task(_job['task_id'])['payload']['env']['MOBILE_HEAD_REV']
+                    )
 
                     for pull in commit.get_pulls():
                         _github_details = {'html_url': pull.html_url, 'title': pull.title}
+                        break
 
                     # Stitch together dataset from TaskCluster and Github results
                     dt_obj_start = datetime.fromtimestamp(_job['start_timestamp'])
@@ -288,7 +291,7 @@ class data_builder:
                 logger.info('Results: %s \n', results[-1]['summary']['outcome_count'])
                 print('Output written to LOG file', end='\n\n')
             else:
-                print('No results found with provided config.', end='\n\n')
+                print('No results found with provided project config.', end='\n\n')
 
         if results:
             try:
@@ -297,3 +300,5 @@ class data_builder:
                     print(f'Output written to [{outfile.name}] \n')
             except OSError as err:
                 raise SystemExit(err) from err
+        else:
+            print('No results found with provided project config.', end='\n\n')
