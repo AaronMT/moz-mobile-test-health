@@ -130,3 +130,6 @@ dmypy.json
 /output.json
 /pyvenv.cfg
 /share
+
+# Misc
+.vscode/
