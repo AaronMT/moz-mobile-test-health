@@ -74,6 +74,7 @@ class data_builder:
         pass
 
     def build_complete_dataset(self, args):
+        from collections import defaultdict
         from urllib.parse import urlparse
 
         client = TreeherderHelper(args.project)
@@ -104,6 +105,7 @@ class data_builder:
                     job_group_symbol=client.project_configuration[job]['group_symbol'],
                     who=client.global_configuration['filters']['author']
                 )
+                #retries = defaultdict(int)
                 for _job in jobs:
                     _matrix_outcome_details = None
                     _matrix_general_details = {}
@@ -116,6 +118,13 @@ class data_builder:
                         job_id=_job['id']
                     )
                     _log = ' '.join([str(_log_url['url']) for _log_url in _log])
+
+                    # if _job['retry_id'] > retries[_job['task_id']]:
+                    #     print(f"Skipping {_job['task_id']} run: {_job['retry_id']} because there is a newer run of it.")
+                    #     continue
+
+                    # retries[_job['task_id']] = _job['retry_id']
+                    # print(f"{_job['task_id']} run: {_job['retry_id']} ")
 
                     # TaskCluster
                     try:
