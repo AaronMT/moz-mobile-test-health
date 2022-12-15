@@ -88,10 +88,11 @@ class data_builder:
         for job in client.project_configuration.sections():
             durations, outcomes, dataset = ([] for i in range(3))
 
-            print('Fetching result [{0}] in [{1}] ({2} max pushes) from'
-                  ' the past [{3}] day(s) ...'.format(
+            print('Fetching result [{0}] in [{1}] [{2}] ({3} max pushes) from'
+                  ' the past [{4}] day(s) ...'.format(
                       client.project_configuration[job]['result'],
                       client.project_configuration[job]['symbol'],
+                      client.project_configuration[job]['project'],
                       client.global_configuration['pushes']['maxcount'],
                       client.global_configuration['pushes']['days']), end='\n')
 
@@ -105,12 +106,12 @@ class data_builder:
                     job_group_symbol=client.project_configuration[job]['group_symbol'],
                     who=client.global_configuration['filters']['author']
                 )
-                #retries = defaultdict(int)
+                retries = defaultdict(int)
                 for _job in jobs:
                     _matrix_outcome_details = None
                     _matrix_general_details = {}
                     _test_details = []
-                    _github_details = None
+                    _pull_request = None
 
                     # Fetch the log URL for the current job
                     _log = client.get_client().get_job_log_url(
@@ -119,12 +120,12 @@ class data_builder:
                     )
                     _log = ' '.join([str(_log_url['url']) for _log_url in _log])
 
-                    # if _job['retry_id'] > retries[_job['task_id']]:
-                    #     print(f"Skipping {_job['task_id']} run: {_job['retry_id']} because there is a newer run of it.")
-                    #     continue
+                    if _job['retry_id'] > retries[_job['task_id']]:
+                        print(f"Skipping {_job['task_id']} run: {_job['retry_id']} because there is a newer run of it.")
+                        continue
 
-                    # retries[_job['task_id']] = _job['retry_id']
-                    # print(f"{_job['task_id']} run: {_job['retry_id']} ")
+                    retries[_job['task_id']] = _job['retry_id']
+                    # print(f"{_job['task_id']} run: {_job['retry_id']}")
 
                     # TaskCluster
                     try:
@@ -212,10 +213,7 @@ class data_builder:
                     commit = repo.get_commit(
                         queue.task(_job['task_id'])['payload']['env']['MOBILE_HEAD_REV']
                     )
-
-                    for pull in commit.get_pulls():
-                        _github_details = {'html_url': pull.html_url, 'title': pull.title}
-                        break
+                    _pull_request = [pull for pull in commit.get_pulls()].pop()
 
                     # Stitch together dataset from TaskCluster and Github results
                     dt_obj_start = datetime.fromtimestamp(_job['start_timestamp'])
@@ -241,10 +239,10 @@ class data_builder:
                         'matrix_general_details': _matrix_general_details,
                         'matrix_outcome_details': _matrix_outcome_details,
                         'revision': commit.sha,
-                        'pullreq_html_url': _github_details['html_url']
-                        if _github_details else None,
-                        'pullreq_html_title': _github_details['title']
-                        if _github_details else None,
+                        'pullreq_html_url': _pull_request.html_url
+                        if _pull_request else None,
+                        'pullreq_html_title': _pull_request.title
+                        if _pull_request else None,
                         'problem_test_details': _test_details
                     })
 
@@ -268,10 +266,10 @@ class data_builder:
                             _matrix_general_details['webLink'],
                             commit.sha,
                             _test_details,
-                            _github_details['html_url'] if
-                            _github_details else None,
-                            _github_details['title'] if
-                            _github_details else None
+                            _pull_request.html_url if
+                            _pull_request else None,
+                            _pull_request.title if
+                            _pull_request else None
                         )
                     )
 
@@ -296,6 +294,7 @@ class data_builder:
                 )
 
                 logger.info('Summary: [%s]', client.project_configuration[job]['symbol'])
+                logger.info('Project: %s', client.project_configuration[job]['project'])
                 logger.info('Duration average: {0:.0f} minutes'.format(results[-1]['summary']['job_duration_avg']))
                 logger.info('Results: %s \n', results[-1]['summary']['outcome_count'])
                 print('Output written to LOG file', end='\n\n')

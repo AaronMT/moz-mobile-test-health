@@ -86,7 +86,7 @@ def main():
                             "type": "plain_text",
                             "text": "Daily {} {} {}: {} w/ {}"
                             .format(
-                                section['summary']['repo'],
+                                section['summary']['project'],
                                 get_slack_emoji(section['summary']['repo']),
                                 section['summary']['job_symbol'],
                                 get_slack_emoji(section['summary']['job_result']),
@@ -158,9 +158,11 @@ def main():
 
                     post_to_slack({'blocks': header + divider + content + divider + footer})
 
-                    print(f"Slack message posted for [{section['summary']['job_symbol']}] with results [{section['summary']['job_result']}]")
+                    print(f"Slack message posted for [{section['summary']['job_symbol']}] "
+                          f"with results [{section['summary']['job_result']}] ({section['summary']['project']})")
                 else:
-                    print(f"No Slack message posted for [{next(iter(section))}] in [{section['summary']['job_symbol']}]")
+                    print(f"No Slack message posted for [{next(iter(section))}] in "
+                          f"[{section['summary']['job_symbol']}] ({section['summary']['project']})")
 
     except OSError as err:
         raise SystemExit(err) from err
