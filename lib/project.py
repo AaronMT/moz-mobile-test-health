@@ -15,6 +15,8 @@ class Project:
     def get_project_configuration(self, project):
         '''Reads INI configuration file'''
         import configparser
-        config = configparser.ConfigParser()
+        config = configparser.ConfigParser(
+            converters={'list': lambda x: [i.strip() for i in x.split(',')]}
+        )
         config.read(f'configurations/{project}.ini')
         return config
