@@ -32,6 +32,7 @@ from statistics import mean
 from github import Github
 from junitparser import Attr, Failure, JUnitXml, TestSuite
 from taskcluster import Queue
+from taskcluster.exceptions import TaskclusterRestFailure
 
 from lib.treeherder import TreeherderHelper
 
@@ -120,7 +121,7 @@ class data_builder:
                     )
                     _log = ' '.join([str(_log_url['url']) for _log_url in _log])
 
-                    if _job['retry_id'] > retries[_job['task_id']]:
+                    if _job['retry_id'] < retries[_job['task_id']]:
                         print(f"Skipping {_job['task_id']} run: {_job['retry_id']} because there is a newer run of it.")
                         continue
 
@@ -202,9 +203,10 @@ class data_builder:
                         else:
                             pass
 
-                    except Exception as err:
+                    except TaskclusterRestFailure:
+                        # Abort iteration on current job, continue to next job
                         print(f"Artifact(s) not available for {_job['task_id']}")
-                        raise SystemExit(err) from err
+                        continue
 
                     # Github (pull request data)
                     repo = github.get_repo(
@@ -213,7 +215,9 @@ class data_builder:
                     commit = repo.get_commit(
                         queue.task(_job['task_id'])['payload']['env']['MOBILE_HEAD_REV']
                     )
-                    _pull_request = [pull for pull in commit.get_pulls()].pop()
+                    pulls = commit.get_pulls()
+
+                    _pull_request = pulls[0] if pulls.totalCount > 0 else None
 
                     # Stitch together dataset from TaskCluster and Github results
                     dt_obj_start = datetime.fromtimestamp(_job['start_timestamp'])
@@ -240,9 +244,9 @@ class data_builder:
                         'matrix_outcome_details': _matrix_outcome_details,
                         'revision': commit.sha,
                         'pullreq_html_url': _pull_request.html_url
-                        if _pull_request else None,
+                        if _pull_request else commit.commit.html_url,
                         'pullreq_html_title': _pull_request.title
-                        if _pull_request else None,
+                        if _pull_request else commit.commit.message,
                         'problem_test_details': _test_details
                     })
 
@@ -267,9 +271,9 @@ class data_builder:
                             commit.sha,
                             _test_details,
                             _pull_request.html_url if
-                            _pull_request else None,
+                            _pull_request else commit.commit.html_url,
                             _pull_request.title if
-                            _pull_request else None
+                            _pull_request else commit.commit.message
                         )
                     )
 

@@ -51,7 +51,7 @@ class Treeherder:
                 )
             )
         except requests.exceptions.HTTPError as err:
-            raise SystemExit(err)
+            raise SystemExit(err) from err
 
 
 class TreeherderConfig:
