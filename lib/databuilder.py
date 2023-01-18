@@ -217,7 +217,7 @@ class data_builder:
                     )
                     pulls = commit.get_pulls()
 
-                    _pull_request = pulls[0] if pulls.totalCount > 0 else None
+                    _pull_request = pulls[0] if pulls is not None and pulls.totalCount > 0 else None
 
                     # Stitch together dataset from TaskCluster and Github results
                     dt_obj_start = datetime.fromtimestamp(_job['start_timestamp'])
