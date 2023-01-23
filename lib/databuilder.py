@@ -147,7 +147,8 @@ class data_builder:
                                 for value in matrix_artifact.values():
                                     _matrix_general_details = {
                                         "webLink": value['webLink'],
-                                        "gcsPath": value['gcsPath']
+                                        "gcsPath": value['gcsPath'],
+                                        "matrixId": value['matrixId']
                                     }
                                     _matrix_outcome_details = value['axes']
 
@@ -253,7 +254,7 @@ class data_builder:
                     logger.info(
                         'Duration: {0:.0f} min {1} - {2} - '
                         '{3}/tasks/{4} - {5} - {6} - [{7}] - '
-                        '[{8}] - {9} - {10} - {11} - {12} - {13}'.format(
+                        '[{8}] - {9} - {10} - {11} - {12} - {13} - {14}'.format(
                             (dt_obj_end - dt_obj_start).total_seconds() / 60,
                             _job['who'],
                             _job['result'],
@@ -268,12 +269,13 @@ class data_builder:
                                                 _matrix_outcome_details]))
                             if _matrix_outcome_details else None,
                             _matrix_general_details['webLink'],
+                            _matrix_general_details['matrixId'],
                             commit.sha,
                             _test_details,
                             _pull_request.html_url if
                             _pull_request else commit.commit.html_url,
                             _pull_request.title if
-                            _pull_request else commit.commit.message
+                            _pull_request else commit.commit.message,
                         )
                     )
 
