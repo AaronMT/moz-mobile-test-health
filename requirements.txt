@@ -11,7 +11,7 @@ future==0.18.2
 idna==3.4
 junitparser==2.8.0
 mohawk==1.1.0
-multidict==6.0.2
+multidict==6.0.4
 pycparser==2.21
 PyGithub==1.57
 PyJWT==2.6.0
