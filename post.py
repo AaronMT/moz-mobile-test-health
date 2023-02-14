@@ -33,20 +33,68 @@ def parse_args(cmdln_args):
 
 
 def post_to_slack(data):
-    webhook_url = os.environ['SLACK_WEBHOOK']
-    requests.post(webhook_url, json=data)
+    webhook_url = os.environ.get('SLACK_WEBHOOK')
+
+    try:
+        requests.post(url=str(webhook_url), json=data, timeout=15)
+    except requests.Timeout:
+        pass
+    except requests.ConnectionError:
+        pass
+
+
+def get_slack_emoji(query):
+    match query:
+        case 'android-components' | 'firefox-android':
+            return ':android:'
+        case 'focus-android':
+            return ':focusandroid:'
+        case 'fenix':
+            return ':firefox-browser:'
+        case 'flaky':
+            return ':warning:'
+        case 'reference-browser':
+            return ':refbrowser:'
+        case 'success':
+            return ':white_check_mark:'
+        case 'testfailed' | 'failure':
+            return ':x:'
+
+
+def get_header_result_text(text):
+    match text:
+        case 'testfailed':
+            return 'flaky | failed tests'
+        case 'success':
+            return 'flaky tests'
 
 
 def main():
     args = parse_args(sys.argv[1:])
 
     try:
-        with open(args.input) as data_file:
+        with open(args.input, encoding='utf-8') as data_file:
             dataset = json.load(data_file)
 
             for section in dataset:
                 content, header, footer = ([] for i in range(3))
                 divider = [{"type": "divider"}]
+                header = [
+                    {
+                        "type": "header",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Daily {} {} {}: {} w/ {}"
+                            .format(
+                                section['summary']['project'],
+                                get_slack_emoji(section['summary']['repo']),
+                                section['summary']['job_symbol'],
+                                get_slack_emoji(section['summary']['job_result']),
+                                get_header_result_text(section['summary']['job_result'])
+                            )
+                        }
+                    }
+                ]
                 footer = [
                     {
                         "type": "context",
@@ -59,32 +107,6 @@ def main():
                                     "Mobile Test Engineering")
                             }
                         ]
-                    }
-                ]
-                header = [
-                    {
-                        "type": "header",
-                        "text": {
-                            "type": "plain_text",
-                            "text": "Daily {} {} {}: {} w/ {}"
-                            .format(
-                                section['summary']['repo'],
-                                ':firefox-browser:' if section['summary']
-                                ['repo'] == 'fenix'
-                                else ':refbrowser:'
-                                if section['summary']['repo']
-                                == 'reference-browser'
-                                else ':focusandroid:' if section['summary']
-                                ['repo'] == 'focus-android'
-                                else ':android:',
-                                section['summary']['job_symbol'],
-                                ":x:" if section['summary']['job_result'] ==
-                                "testfailed" else ":white_check_mark:",
-                                "flaky | failed tests" if
-                                section['summary']['job_result']
-                                == "testfailed" else "flaky tests"
-                            )
-                        }
                     }
                 ]
 
@@ -117,11 +139,8 @@ def main():
                                         "text": {
                                             "type": "plain_text",
                                             "text": "{} {}".format(
-                                                test
-                                                ['result'], ":x:"
-                                                if test['result']
-                                                == "failure"
-                                                else ":warning:"
+                                                test['result'],
+                                                get_slack_emoji(test['result'])
                                             )
                                         },
                                         "value": "firebase",
@@ -137,24 +156,16 @@ def main():
                     [x.__delitem__(0) for x in content]
                     content = [item for sublist in content for item in sublist]
 
-                    post_to_slack(
-                        {'blocks': header + divider + content + divider +
-                         footer})
-                    print("Slack message posted for [{}] results".format(
-                        ''.join(
-                            [section['summary']['job_symbol'], '.',
-                             section['summary']['job_result']])), end="\n")
+                    post_to_slack({'blocks': header + divider + content + divider + footer})
 
+                    print(f"Slack message posted for [{section['summary']['job_symbol']}] "
+                          f"with results [{section['summary']['job_result']}] ({section['summary']['project']})")
                 else:
-                    print("No failures or intermittents in ({}) in [{}]. "
-                          "No Slack message posted.".
-                          format(
-                            next(iter(section)),
-                            section['summary']['job_symbol']
-                          ), end='\n')
-    except OSError as e:
-        print(e)
-        sys.exit(1)
+                    print(f"No Slack message posted for [{next(iter(section))}] in "
+                          f"[{section['summary']['job_symbol']}] ({section['summary']['project']})")
+
+    except OSError as err:
+        raise SystemExit(err) from err
 
 
 if __name__ == '__main__':
