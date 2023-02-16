@@ -184,7 +184,7 @@ class data_builder:
                             if report_artifact is not None:
                                 for suite in report_artifact:  # pylint: disable=not-an-iterable
                                     cur_suite = _TestSuite.fromelem(suite)
-                                    if cur_suite.flakes == '1':
+                                    if cur_suite.flakes != '0':
                                         for case in suite:
                                             # Should I check for flaky=true?
                                             if case.result:
