@@ -156,7 +156,7 @@ def main():
                     [x.__delitem__(0) for x in content]
                     content = [item for sublist in content for item in sublist]
 
-                    post_to_slack({'blocks': header + divider + content + divider + footer})
+                    post_to_slack({'blocks': header + divider + content + divider + footer, 'text': "no-use"})
 
                     print(f"Slack message posted for [{section['summary']['job_symbol']}] "
                           f"with results [{section['summary']['job_result']}] ({section['summary']['project']})")
