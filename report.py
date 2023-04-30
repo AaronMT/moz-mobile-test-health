@@ -23,19 +23,25 @@ def generate_html(test_object):
     match test_object["testResult"]:
         case "flaky":
             color = "#FFFFCC"
-            badge = "https://img.shields.io/badge/flaky-yellow"
+            test_badge = "https://img.shields.io/badge/flaky-yellow"
         case "failure":
             color = "#ffcccc"
-            badge = "https://img.shields.io/badge/failure-red"
+            test_badge = "https://img.shields.io/badge/failure-red"
         case _:
             color = "#ccffcc"
-            badge = "https://img.shields.io/badge/success-green"
+            test_badge = "https://img.shields.io/badge/success-green"
+    match test_object["task"]:
+        case _:
+            task_badge = "https://img.shields.io/badge/-task-lightgrey"
+    match test_object["source"]:
+        case _:
+            source_badge = "https://img.shields.io/badge/Github-Pull%20Request-black"
     return f"""
         <tr style="background-color:{color};">
             <td>{escape(test_object['testName'])}</td>
-            <td style="text-align: center;"><a href="{escape(test_object['details'])}"><img src="{badge}"></a></td>
-            <td style="text-align: center;"><a href="{escape(test_object['task'])}">task</a></td>
-            <td><a href={escape(test_object['source'])}>source</a></td>
+            <td style="text-align: center;"><a href="{escape(test_object['details'])}"><img src="{test_badge}"></a></td>
+            <td style="text-align: center;"><a href="{escape(test_object['task'])}"><img src="{task_badge}"</a></td>
+            <td><a href={escape(test_object['source'])}><img src="{source_badge}"</a></td>
         </tr>
     """
 
