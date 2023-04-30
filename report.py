@@ -1,3 +1,22 @@
+"""
+Generates an HTML report from a dataset containing test results. The report
+displays the names of each test, as well as badges indicating whether the test
+result was a failure, or flaky. The report also includes links to the
+details of each test, the task associated with each test, and the GitHub pull
+request that triggered the test run.
+
+Inputs:
+- cmdln_args: a list of command-line arguments, including an optional argument
+  '--input' specifying the name of the input file containing the test results.
+
+Outputs:
+- A report.html file containing an HTML report of the test results.
+"""
+
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 import argparse
 import json
 import sys

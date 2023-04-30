@@ -84,6 +84,13 @@ def main():
         args.url
     ).group(1).replace("-", " ").title()
 
+    slackmoji_map = {
+        'Firefox Android': ':firefox:',
+        'Reference Browser': ':refbrowser:',
+    }
+
+    slackmoji = slackmoji_map.get(report_name, ":browser:")
+
     header = [
         {
             "type": "header",
@@ -111,7 +118,7 @@ def main():
             "text": {
                 "type": "mrkdwn",
                 "text": (
-                    f":clipboard: *Project:* {report_name}\n\n"
+                    f":clipboard: *Project:* {report_name} {slackmoji}\n\n"
                     f":link: *Link:* <{args.url}|View Report>"
                 ),
             },
