@@ -61,7 +61,7 @@ jobs:
           path: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json
           destination: mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}
       - uses: google-github-actions/upload-cloud-storage@v1
-        if: hashFiles('report.html') !=- ''
+        if: hashFiles('report.html') != ''
         name: Upload Artifact (html) to Google Cloud Storage
         with:
           path: report.html
