@@ -73,7 +73,9 @@ jobs:
       - name: Post generated HTML URL to Slack
         id: runSlackHTML
         run: | 
+          if: hashFiles('report.html') != ''
           python post-html-report.py --url=https://storage.googleapis.com/mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}/${{ steps.date.outputs.date }}_${{ matrix.configuration }}.html
+        continue-on-error: true
       - name: Show public URL
         if: hashFiles('output.json') != '' || hashFiles('report.html') != ''
         run: |
