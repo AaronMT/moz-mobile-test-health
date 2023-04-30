@@ -49,7 +49,7 @@ jobs:
       - name: Generate HTML Report
         if: hashFiles('output.json') != ''
         run: |
-          python report.py --input=$JSON_FILE
+          python report.py
       - uses: google-github-actions/auth@v1
         name: Authenticate Google Cloud
         with:
