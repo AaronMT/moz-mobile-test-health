@@ -46,6 +46,10 @@ jobs:
         with:
           name: JSON (${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json) [zip]
           path: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json
+      - name: Generate HTML Report
+        if: hashFiles('output.json') != ''
+        run: |
+          python report.py --input=$JSON_FILE
       - uses: google-github-actions/auth@v1
         name: Authenticate Google Cloud
         with:
@@ -56,7 +60,14 @@ jobs:
         with: 
           path: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json
           destination: mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}
+      - uses: google-github-actions/upload-cloud-storage@v1
+        if: hashFiles('report.html') !=- ''
+        name: Upload Artifact (html) to Google Cloud Storage
+        with:
+          path: report.html
+          destination: mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}
       - name: Show public URL
-        if: hashFiles('output.json') != ''
+        if: hashFiles('output.json') != '' || hashFiles('report.html') != ''
         run: |
-          echo "Public URL: https://storage.googleapis.com/mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}/${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json"
+          echo "Public JSON URL: https://storage.googleapis.com/mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}/${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json"
+          echo "Public Report HTML URL: https://storage.googleapis.com/mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}/report.html"
