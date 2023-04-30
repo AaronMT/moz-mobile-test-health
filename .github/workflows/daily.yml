@@ -50,6 +50,10 @@ jobs:
         if: hashFiles('output.json') != ''
         run: |
           python report.py
+          [ ! -e report.html ] || cp report.html $HTML_FILE
+        continue-on-error: true
+        env:
+          HTML_FILE: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.html
       - uses: google-github-actions/auth@v1
         name: Authenticate Google Cloud
         with:
@@ -64,10 +68,10 @@ jobs:
         if: hashFiles('report.html') != ''
         name: Upload Artifact (html) to Google Cloud Storage
         with:
-          path: report.html
+          path: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.html
           destination: mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}
       - name: Show public URL
         if: hashFiles('output.json') != '' || hashFiles('report.html') != ''
         run: |
           echo "Public JSON URL: https://storage.googleapis.com/mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}/${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json"
-          echo "Public Report HTML URL: https://storage.googleapis.com/mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}/report.html"
+          echo "Public Report HTML URL: https://storage.googleapis.com/mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}/${{ steps.date.outputs.date }}_${{ matrix.configuration }}.html"
