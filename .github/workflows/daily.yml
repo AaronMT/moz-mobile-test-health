@@ -70,6 +70,10 @@ jobs:
         with:
           path: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.html
           destination: mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}
+      - name: Post generated HTML URL to Slack
+        id: runSlackHTML
+        run: | 
+          python post-html-report.py --url=https://storage.googleapis.com/mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}/${{ steps.date.outputs.date }}_${{ matrix.configuration }}.html
       - name: Show public URL
         if: hashFiles('output.json') != '' || hashFiles('report.html') != ''
         run: |
