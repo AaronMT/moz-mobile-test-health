@@ -26,8 +26,8 @@ jobs:
       - name: Set current date as env variable
         id: date
         run: |
-          echo "date=$(date +'%Y_%m_%d_%I_%M_%p')" >> $GITHUB_OUTPUT
-          echo "day=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+          echo "::set-output name=date::$(date +'%Y_%m_%d_%I_%M_%p')"
+          echo "::set-output name=day::$(date +'%Y-%m-%d')"
       - name: Run script
         id: runClient
         run: |
@@ -39,13 +39,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          JSON_FILE: ${{ env.date }}_${{ matrix.configuration }}.json
+          JSON_FILE: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json
       - uses: actions/upload-artifact@v3
         name: Upload Artifact (json)
         if: hashFiles('output.json') != ''
         with:
-          name: JSON (${{ env.date }}_${{ matrix.configuration }}.json) [zip]
-          path: ${{ env.date }}_${{ matrix.configuration }}.json
+          name: JSON (${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json) [zip]
+          path: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json
       - name: Generate HTML Report
         if: hashFiles('output.json') != ''
         run: |
@@ -53,7 +53,7 @@ jobs:
           [ ! -e report.html ] || cp report.html $HTML_FILE
         continue-on-error: true
         env:
-          HTML_FILE: ${{ env.date }}_${{ matrix.configuration }}.html
+          HTML_FILE: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.html
       - uses: google-github-actions/auth@v1
         name: Authenticate Google Cloud
         with:
@@ -62,26 +62,26 @@ jobs:
         if: hashFiles('output.json') != ''
         name: Upload Artifact (json) to Google Cloud Storage
         with: 
-          path: ${{ env.date }}_${{ matrix.configuration }}.json
-          destination: mobile-reports/public/moz-mobile-test-health/${{ env.day }}
+          path: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json
+          destination: mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}
           process_gcloudignore: false
       - uses: google-github-actions/upload-cloud-storage@v1
         if: hashFiles('report.html') != ''
         name: Upload Artifact (html) to Google Cloud Storage
         with:
-          path: ${{ env.date }}_${{ matrix.configuration }}.html
-          destination: mobile-reports/public/moz-mobile-test-health/${{ env.day }}
+          path: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.html
+          destination: mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}
           process_gcloudignore: false
       - name: Post generated HTML URL to Slack
         id: runSlackHTML
         if: hashFiles('report.html') != ''
         run: | 
-          python post-html-report.py --url=https://storage.googleapis.com/mobile-reports/public/moz-mobile-test-health/${{ env.day }}/${{ env.date }}_${{ matrix.configuration }}.html
+          python post-html-report.py --url=https://storage.googleapis.com/mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}/${{ steps.date.outputs.date }}_${{ matrix.configuration }}.html
         continue-on-error: true
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
       - name: Show public URL
         if: hashFiles('output.json') != '' || hashFiles('report.html') != ''
         run: |
-          echo "Public JSON URL: https://storage.googleapis.com/mobile-reports/public/moz-mobile-test-health/${{ env.day }}/${{ env.date }}_${{ matrix.configuration }}.json"
-          echo "Public Report HTML URL: https://storage.googleapis.com/mobile-reports/public/moz-mobile-test-health/${{ env.day }}/${{ env.date }}_${{ matrix.configuration }}.html"
+          echo "Public JSON URL: https://storage.googleapis.com/mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}/${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json"
+          echo "Public Report HTML URL: https://storage.googleapis.com/mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}/${{ steps.date.outputs.date }}_${{ matrix.configuration }}.html"
