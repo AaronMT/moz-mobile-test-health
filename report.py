@@ -22,6 +22,8 @@ import json
 import sys
 from html import escape
 
+import requests
+
 
 def parse_args(cmdln_args):
     parser = argparse.ArgumentParser(
@@ -36,6 +38,31 @@ def parse_args(cmdln_args):
     )
 
     return parser.parse_args(args=cmdln_args)
+
+
+def search_bugs(test_name):
+    url = "https://bugzilla.mozilla.org/rest/bug"
+    params = {
+        "summary": test_name,
+        "status": ["UNCONFIRMED", "NEW", "ASSIGNED", "REOPENED"]
+    }
+    response = requests.get(url, params=params)
+
+    if response.status_code != 200:
+        return None
+
+    results = json.loads(response.content.decode())
+    bugs = []
+
+    for result in results["bugs"]:
+        bug = {
+            "id": result["id"],
+            "summary": result["summary"],
+            "url": f"https://bugzilla.mozilla.org/show_bug.cgi?id={result['id']}"
+        }
+        bugs.append(bug)
+
+    return bugs
 
 
 def generate_html(test_object):
@@ -55,6 +82,18 @@ def generate_html(test_object):
     match test_object["source"]:
         case _:
             source_badge = "https://img.shields.io/badge/Github-Pull%20Request-lightgrey"
+
+    bugs = search_bugs(test_object['testName'])
+    bug_badge = "https://img.shields.io/badge/-bugzilla-green"
+    if bugs:
+        bug_list = '<ul>'
+        for bug in bugs:
+            bug_list += f'<li><a href="{bug["url"]}">{bug["summary"]} (#{bug["id"]})</a></li>'
+            bug_list += '</ul>'
+            bug_html = f'<div class="bugs"><img src="{bug_badge}">{bug_list}</div>'
+    else:
+        bug_html = ''
+
     return f"""
         <tr style="background-color:{color};">
             <td>
@@ -64,9 +103,15 @@ def generate_html(test_object):
                </div>
                 <div id="{escape(test_object['testName'])}_details" style="display:none;" onclick="event.stopPropagation();">
                     <div class="toggle" onclick="toggleDetails('{escape(test_object['testName'])}_details')">
-                        <span class="icon">&#8722;</span> Hide details
+                        <span class="icon">&#8722;</span>
                     </div>
-                    <pre class="console-output log"><code>{escape(test_object['trace'])}</code></pre>
+                    <div style="display: inline-block;">
+                      <div class="details-link">Hide details</div>
+                    </div>
+                    <div class="console-wrapper">
+                        {bug_html}
+                        <pre class="console-output log"><code>{escape(test_object['trace'])}</code></pre>
+                    </div>
                 </div>
             </td>
             <td style="text-align: center;"><a href="{escape(test_object['details'])}"><img src="{test_badge}"></a></td>
@@ -120,6 +165,23 @@ def generate_report(section, test_objects):
                         padding: 5px;
                         margin-bottom: 10px;
                         border-radius: 5px;
+                    }}
+                    .console-wrapper {{
+                        overflow-y: auto;
+                        padding: 10px;
+                        max-height: 150px
+                    }}
+                    .bugs {{
+                        font-family: "Open Sans", sans-serif;"
+                        font-size: 12px;
+                    }}
+                    .toggle {{
+                       display: inline-block;
+                       cursor: pointer;
+                    }}
+                    .details-link {{
+                        font-family: "Open Sans", sans-serif;
+                        font-size: 12px;
                     }}
                 </style>
                 <script>
