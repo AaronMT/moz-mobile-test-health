@@ -86,12 +86,14 @@ def generate_html(test_object):
             source_badge = "https://img.shields.io/badge/Github-Pull%20Request-lightgrey"
 
     bugs = search_bugs(test_object['testName'])
-    bug_badge = "https://img.shields.io/badge/-bugzilla-green"
+
     if bugs:
-        bug_list = ''
+        bug_list = '<ul>'
         for bug in bugs:
             bug_list += f'<li><a href="{bug["url"]}">{bug["summary"]} (#{bug["id"]})</a></li>'
-            bug_html = f'<div class="bugs"><img src="{bug_badge}">{bug_list}</div>'
+            bug_html = f'{bug_list}'
+        bug_list += '</ul>'
+
     else:
         bug_html = ''
 
@@ -111,6 +113,8 @@ def generate_html(test_object):
                     </div>
                     <div class="console-wrapper">
                         {bug_html}
+                    </div>
+                    <div class="console-wrapper">
                         <pre class="console-output log"><code>{escape(test_object['trace'])}</code></pre>
                     </div>
                 </div>
@@ -183,6 +187,13 @@ def generate_report(section, test_objects):
                     .details-link {{
                         font-family: "Open Sans", sans-serif;
                         font-size: 12px;
+                    }}
+                    ul {{
+                        padding-left: 60px;
+                        list-style-image: url('https://img.shields.io/badge/-bugzilla-green');
+                    }}
+                    li {{
+                        vertical-align: -2px;
                     }}
                 </style>
                 <script>
