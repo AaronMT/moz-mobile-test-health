@@ -51,13 +51,24 @@ def generate_html(test_object):
             test_badge = "https://img.shields.io/badge/success-green"
     match test_object["task"]:
         case _:
-            task_badge = "https://img.shields.io/badge/-task-lightgrey"
+            task_badge = "https://img.shields.io/badge/-task-lightblue"
     match test_object["source"]:
         case _:
-            source_badge = "https://img.shields.io/badge/Github-Pull%20Request-black"
+            source_badge = "https://img.shields.io/badge/Github-Pull%20Request-lightgrey"
     return f"""
         <tr style="background-color:{color};">
-            <td>{escape(test_object['testName'])}</td>
+            <td>
+                <div class="test-name" onclick="toggleDetails('{escape(test_object['testName'])}_details')">
+                   <span class="icon">&#43;</span> {escape(test_object['testName'])}
+                </div>
+               </div>
+                <div id="{escape(test_object['testName'])}_details" style="display:none;" onclick="event.stopPropagation();">
+                    <div class="toggle" onclick="toggleDetails('{escape(test_object['testName'])}_details')">
+                        <span class="icon">&#8722;</span> Hide details
+                    </div>
+                    <pre class="console-output log"><code>{escape(test_object['trace'])}</code></pre>
+                </div>
+            </td>
             <td style="text-align: center;"><a href="{escape(test_object['details'])}"><img src="{test_badge}"></a></td>
             <td style="text-align: center;"><a href="{escape(test_object['task'])}"><img src="{task_badge}"</a></td>
             <td><a href={escape(test_object['source'])}><img src="{source_badge}"</a></td>
@@ -74,9 +85,11 @@ def generate_report(section, test_objects):
             <head>
                 <meta charset="utf-8">
                 <title>Test Report</title>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/default.min.css" />
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
                 <style>
                     body {{
-                        font-family: Segoe UI;
+                        font-family: "Open Sans", sans-serif;
                     }}
                     table {{
                         border-collapse: collapse;
@@ -91,7 +104,39 @@ def generate_report(section, test_objects):
                         font-size: 16px;
                         font-weight: bold;
                     }}
-                    </style>
+                    .console-output {{
+                        font-family: monospace;
+                        font-size: 12px;
+                        line-height: 1.4;
+                        background-color: #f4f4f4;
+                        border-radius: 5px;
+                        padding: 10px;
+                        white-space: pre-wrap;
+                    }}
+                    .test-name {{
+                        font-family: "Open Sans", sans-serif;
+                        font-weight: bold;
+                        font-size: 14px;
+                        padding: 5px;
+                        margin-bottom: 10px;
+                        border-radius: 5px;
+                    }}
+                </style>
+                <script>
+                    function toggleDetails(id) {{
+                        var element = document.getElementById(id);
+                        if (element.style.display === "none") {{
+                            element.style.display = "block";
+                        }} else {{
+                            element.style.display = "none";
+                        }}
+                    }}
+                </script>
+                <script>
+                    document.addEventListener("DOMContentLoaded", function() {{
+                        hljs.highlightAll();
+                    }});
+                </script>
             </head>
             <body>
                 <h1>{section}</h1>
@@ -140,6 +185,7 @@ def main():
                                 {
                                     "testName": test['name'],
                                     "testResult": test['result'],
+                                    "trace": test['details'],
                                     "source": problem['pullreq_html_url'],
                                     "details": problem['matrix_general_details']['webLink'],
                                     "task": problem['task_html_url']

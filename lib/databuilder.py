@@ -191,6 +191,7 @@ class data_builder:
                                                 _test_details.append({
                                                     'name': case.name,
                                                     'result': 'flaky',
+                                                    'details': case.result[0].text
                                                 })
                                     else:
                                         for case in suite:
@@ -199,6 +200,7 @@ class data_builder:
                                                     _test_details.append({
                                                         'name': case.name,
                                                         'result': 'failure',
+                                                        'details': entry.text
                                                     })
                                                 break
                         else:
