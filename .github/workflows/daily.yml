@@ -26,8 +26,8 @@ jobs:
       - name: Set current date as env variable
         id: date
         run: |
-          echo "::set-output name=date::$(date +'%Y_%m_%d_%I_%M_%p')"
-          echo "::set-output name=day::$(date +'%Y-%m-%d')"
+          echo "date=$(date +'%Y_%m_%d_%I_%M_%p')" >> $GITHUB_OUTPUT
+          echo "day=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
       - name: Run script
         id: runClient
         run: |
