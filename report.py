@@ -24,6 +24,8 @@ from html import escape
 
 import requests
 
+session = requests.Session()
+
 
 def parse_args(cmdln_args):
     parser = argparse.ArgumentParser(
@@ -46,7 +48,7 @@ def search_bugs(test_name):
         "summary": test_name,
         "status": ["UNCONFIRMED", "NEW", "ASSIGNED", "REOPENED"]
     }
-    response = requests.get(url, params=params)
+    response = session.get(url, params=params)
 
     if response.status_code != 200:
         return None
@@ -86,10 +88,9 @@ def generate_html(test_object):
     bugs = search_bugs(test_object['testName'])
     bug_badge = "https://img.shields.io/badge/-bugzilla-green"
     if bugs:
-        bug_list = '<ul>'
+        bug_list = ''
         for bug in bugs:
             bug_list += f'<li><a href="{bug["url"]}">{bug["summary"]} (#{bug["id"]})</a></li>'
-            bug_list += '</ul>'
             bug_html = f'<div class="bugs"><img src="{bug_badge}">{bug_list}</div>'
     else:
         bug_html = ''
