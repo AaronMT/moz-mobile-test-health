@@ -62,10 +62,10 @@ jobs:
         name: Upload Artifacts to Google Cloud Storage
         if: hashFiles('output.json') != '' || hashFiles('report.html') != ''
         with:
-        path: ${{ if(hashFiles('output.json') != '', steps.date.outputs.date + '_' + matrix.configuration + '.json', '') }}
+          path: ${{ if(hashFiles('output.json') != '', steps.date.outputs.date + '_' + matrix.configuration + '.json', '') }}
               ${{ if(hashFiles('report.html') != '', steps.date.outputs.date + '_' + matrix.configuration + '.html', '') }}
-        destination: mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}
-        process_gcloudignore: false
+          destination: mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}
+          process_gcloudignore: false
       - name: Post generated HTML URL to Slack
         id: runSlackHTML
         if: hashFiles('report.html') != ''
