@@ -59,12 +59,17 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
       - uses: google-github-actions/upload-cloud-storage@v1
-        name: Upload Artifacts to Google Cloud Storage
-        if: hashFiles('output.json') != '' || hashFiles('report.html') != ''
+        if: hashFiles('output.json') != ''
+        name: Upload Artifact (json) to Google Cloud Storage
+        with: 
+          path: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.json
+          destination: mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}
+          process_gcloudignore: false
+      - uses: google-github-actions/upload-cloud-storage@v1
+        if: hashFiles('report.html') != ''
+        name: Upload Artifact (html) to Google Cloud Storage
         with:
-          path: |
-            ${{ if(hashFiles('output.json') != '', steps.date.outputs.date + '_' + matrix.configuration + '.json', '') }}
-            ${{ if(hashFiles('report.html') != '', steps.date.outputs.date + '_' + matrix.configuration + '.html', '') }}
+          path: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.html
           destination: mobile-reports/public/moz-mobile-test-health/${{ steps.date.outputs.day }}
           process_gcloudignore: false
       - name: Post generated HTML URL to Slack
