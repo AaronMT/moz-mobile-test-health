@@ -95,7 +95,8 @@ def generate_html(test_object):
         bug_list += '</ul>'
 
     else:
-        bug_html = ''
+        bug_html = '<a href="https://bugzilla.mozilla.org/enter_bug.cgi?product=Fenix&component=UI%20Tests">' \
+                   '<img src=https://img.shields.io/badge/bugzilla-new%20bug-green></a>'
 
     return f"""
         <tr style="background-color:{color};">
@@ -115,7 +116,9 @@ def generate_html(test_object):
                         {bug_html}
                     </div>
                     <div class="console-wrapper">
-                        <pre class="console-output log"><code>{escape(test_object['trace'])}</code></pre>
+                        <pre class="console-output log">
+                            <code>{escape(test_object['trace'])}</code>
+                        </pre>
                     </div>
                 </div>
             </td>
