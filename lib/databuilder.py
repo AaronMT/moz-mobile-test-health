@@ -131,7 +131,7 @@ class data_builder:
                     # TaskCluster
                     try:
                         # Dependent on public artifact visibility
-                        if (re.compile("^(ui-|legacy){1}.*")).search(
+                        if (re.compile("^(ui-|robo|legacy){1}.*")).search(
                             client.project_configuration[job]['symbol']
                         ):
                             # Matrix (i.e, matrix_ids.json) generated from Flank
@@ -148,7 +148,8 @@ class data_builder:
                                     _matrix_general_details = {
                                         "webLink": value['webLink'],
                                         "gcsPath": value['gcsPath'],
-                                        "matrixId": value['matrixId']
+                                        "matrixId": value['matrixId'],
+                                        "isRoboTest": value['isRoboTest'],
                                     }
                                     _matrix_outcome_details = value['axes']
 
@@ -203,6 +204,17 @@ class data_builder:
                                                         'details': entry.text
                                                     })
                                                 break
+                                # For Robo Tests, as of now, there are no artifacts exposing details
+                                # about the outcome (e.g, crash details), so we have to write a custom outcome
+                                if _matrix_general_details['isRoboTest'] is True:
+                                    if _matrix_outcome_details is not None:
+                                        for axis in _matrix_outcome_details:
+                                            if axis['outcome'] == 'failure':
+                                                _test_details.append({
+                                                    'name': axis['device'],
+                                                    'result': 'failure',
+                                                    'details': axis['details']
+                                                })
                         else:
                             pass
 
