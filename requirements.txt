@@ -23,6 +23,6 @@ slugid==2.0.0
 taskcluster==52.0.0
 taskcluster-urls==13.0.1
 treeherder-client==5.0.0
-urllib3==1.26.14
+urllib3==2.0.3
 wrapt==1.15.0
 yarl==1.8.2
