@@ -30,7 +30,7 @@ from datetime import datetime
 from statistics import mean
 
 from github import Github
-from junitparser import Attr, Failure, JUnitXml, TestSuite
+from junitparser import Attr, Failure, JUnitXml, JUnitXmlError, TestSuite
 from taskcluster import Queue
 from taskcluster.exceptions import TaskclusterRestFailure
 
@@ -48,21 +48,34 @@ def serialize_sets(obj):
 
 
 def get_artifact(url, params=None):
+    from urllib.error import HTTPError, URLError
     from urllib.parse import urlencode
-    from urllib.request import urlopen
+    from urllib.request import Request, urlopen
 
     if params is not None:
         url += "?" + urlencode(params)
 
-    response = urlopen(url=url, context=ssl._create_unverified_context())
+    try:
+        request = Request(url=url, headers={'Accept-Encoding': 'gzip'})
+        response = urlopen(request, context=ssl._create_unverified_context())
+    except HTTPError as e: 
+        return f'HTTPError: {e.code}'
+    except URLError as e:
+        return f'URLError: {e.reason}'
 
-    match response.headers.get('Content-Type'):
-        case 'application/json':
+    try:
+        if response.headers.get('Content-Type') == 'application/json':
             return json.loads(gzip.decompress(response.read()))
-        case 'application/xml':
+        elif response.headers.get('Content-Type') == 'application/xml':
             return JUnitXml.fromstring(gzip.decompress(response.read()))
-        case _:
-            SystemError('Unknown artifact type')
+        else:
+            return SystemError('Unknown artifact type')
+    except OSError:
+        return 'Error decompressing data'
+    except json.JSONDecodeError:
+        return 'Error decoding JSON data'
+    except JUnitXmlError:
+        return 'Error parsing XML data'
 
 
 class _TestSuite(TestSuite):
