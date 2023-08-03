@@ -107,7 +107,7 @@ def main():
             "elements": [
                 {
                     "type": "mrkdwn",
-                    "text": f":testops-notify: created by [<{'https://mana.mozilla.org/wiki/x/P_zNBw'}|{'Mobile Test Engineering'}>]"
+                    "text": f":testops-notify: created by [<{'https://mozilla-hub.atlassian.net/wiki/spaces/MTE/overview'}|{'Mobile Test Engineering'}>]"
                 }
             ]
         }
