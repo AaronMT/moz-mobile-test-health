@@ -103,7 +103,7 @@ def main():
                                 "type": "mrkdwn",
                                 "text": ":testops-notify: created by [<{}|{}>]"
                                 .format(
-                                    "https://mana.mozilla.org/wiki/x/P_zNBw",
+                                    "https://mozilla-hub.atlassian.net/wiki/spaces/MTE/overview",
                                     "Mobile Test Engineering")
                             }
                         ]
