@@ -20,7 +20,7 @@ python-dateutil==2.8.2
 requests==2.31.0
 six==1.16.0
 slugid==2.0.0
-taskcluster==54.4.2
+taskcluster==55.1.1
 taskcluster-urls==13.0.1
 treeherder-client==5.0.0
 urllib3==2.0.4
