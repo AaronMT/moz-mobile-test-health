@@ -4,7 +4,7 @@ async-timeout==4.0.3
 attrs==23.1.0
 certifi==2023.7.22
 cffi==1.16.0
-charset-normalizer==3.3.1
+charset-normalizer==3.3.2
 Deprecated==1.2.14
 frozenlist==1.4.0
 future==0.18.3
