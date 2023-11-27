@@ -20,13 +20,11 @@ class Treeherder:
     def __init__(self, project):
         self.project = project
         self.config = self.get_global_config()
-        self.client = self.set_client()
+        self.client = self.create_client()
 
-    def get_global_config(self):
-        return TreeherderConfig.read_global_config(self)  # type: ignore
-
-    def set_client(self):
-        return self.create_client()
+    @staticmethod
+    def get_global_config():
+        return TreeherderConfig().read_global_config()
 
     def create_client(self):
         return TreeherderClient(
@@ -57,13 +55,13 @@ class Treeherder:
 class TreeherderConfig:
     '''TreeherderConfig class for reading from INI config file'''
 
-    def __init__(self):
-        pass
+    CONFIG_FILE_PATH = 'configurations/config.ini'
 
-    def read_global_config(self):
+    @staticmethod
+    def read_global_config():
         import configparser
         config = configparser.ConfigParser()
-        config.read('configurations/config.ini')
+        config.read(TreeherderConfig.CONFIG_FILE_PATH)
         return config
 
 

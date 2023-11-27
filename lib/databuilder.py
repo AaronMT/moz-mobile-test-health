@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 
 
 def serialize_sets(obj):
+    '''Serialize sets to lists.'''
     if isinstance(obj, set):
         return list(obj)
 
@@ -48,6 +49,7 @@ def serialize_sets(obj):
 
 
 def get_artifact(url, params=None):
+    '''Fetch artifact from Taskcluster.'''
     from urllib.error import HTTPError, URLError
     from urllib.parse import urlencode
     from urllib.request import Request, urlopen
@@ -58,7 +60,7 @@ def get_artifact(url, params=None):
     try:
         request = Request(url=url, headers={'Accept-Encoding': 'gzip'})
         response = urlopen(request, context=ssl._create_unverified_context())
-    except HTTPError as e: 
+    except HTTPError as e:
         return f'HTTPError: {e.code}'
     except URLError as e:
         return f'URLError: {e.reason}'
@@ -79,67 +81,93 @@ def get_artifact(url, params=None):
 
 
 class _TestSuite(TestSuite):
+    '''Extend TestSuite class to add flakes attribute.'''
     flakes = Attr()
 
 
 class data_builder:
-
+    '''Build the dataset.'''
     def __init__(self):
-        pass
+        self.github = Github(os.environ['GITHUB_TOKEN']) \
+            if 'GITHUB_TOKEN' in os.environ else exit("GITHUB_TOKEN environment variable is not set")
 
-    def build_complete_dataset(self, args):
-        from collections import defaultdict
+    def fetch_pushes(self, client):
+        """Fetch pushes from Treeherder API."""
+        return client.get_pushes()
+
+    def fetch_jobs(self, client, args, push, job):
+        """Fetch jobs from Treeherder API."""
+        return client.get_client().get_jobs(
+            project=args.project,
+            push_id=push['id'],
+            tier=client.project_configuration[job]['tier'],
+            job_type_symbol=client.project_configuration[job]['symbol'],
+            result=client.project_configuration[job]['result'],
+            job_group_symbol=client.project_configuration[job]['group_symbol'],
+            who=client.global_configuration['filters']['author']
+        )
+
+    def fetch_github(self, current_job, queue):
+        """Fetch Github data."""
         from urllib.parse import urlparse
 
+        task_payload = queue.task(current_job['task_id'])['payload']
+        repo = self.github.get_repo(
+            urlparse(task_payload['env']['MOBILE_HEAD_REPOSITORY']).path.strip("/")
+        )
+        commit = repo.get_commit(task_payload['env']['MOBILE_HEAD_REV'])
+        pulls = commit.get_pulls()
+        pull_request = pulls[0] if pulls is not None and pulls.totalCount > 0 else None
+
+        return pull_request, commit
+
+    def build_complete_dataset(self, args):
+        """Build the complete dataset."""
+        from collections import defaultdict
+
         client = TreeherderHelper(args.project)
-        github = Github(os.environ.get('GITHUB_TOKEN'))
-        pushes = client.get_pushes()
+        pushes = self.fetch_pushes(client)
         queue = Queue({'rootUrl': client.global_configuration['taskcluster']['host']})
-        results, disabled_tests = ([] for i in range(2))
+
+        results = []
+        disabled_tests = set()
 
         print(f"\nFetching [{len(client.project_configuration.sections())}] in [{args.project}] {client.project_configuration.sections()}", end='\n\n')
 
         for job in client.project_configuration.sections():
-            durations, outcomes, dataset = ([] for i in range(3))
 
-            print('Fetching result [{0}] in [{1}] [{2}] ({3} max pushes) from'
-                  ' the past [{4}] day(s) ...'.format(
-                      client.project_configuration[job]['result'],
-                      client.project_configuration[job]['symbol'],
-                      client.project_configuration[job]['project'],
-                      client.global_configuration['pushes']['maxcount'],
-                      client.global_configuration['pushes']['days']), end='\n')
+            durations, outcomes, dataset = [], [], []
 
-            for _push in sorted(pushes, key=lambda push: push['id']):
-                jobs = client.get_client().get_jobs(
-                    project=args.project,
-                    push_id=_push['id'],
-                    tier=client.project_configuration[job]['tier'],
-                    job_type_symbol=client.project_configuration[job]['symbol'],
-                    result=client.project_configuration[job]['result'],
-                    job_group_symbol=client.project_configuration[job]['group_symbol'],
-                    who=client.global_configuration['filters']['author']
-                )
+            print(f"Fetching result [{client.project_configuration[job]['result']}] in "
+                  f"[{client.project_configuration[job]['symbol']}] "
+                  f"[{client.project_configuration[job]['project']}] "
+                  f"({client.global_configuration['pushes']['maxcount']} max pushes) "
+                  f"from the past [{client.global_configuration['pushes']['days']}] day(s) ...",
+                  end='\n')
+
+            for current_push in sorted(pushes, key=lambda push: push['id']):
+
+                jobs = self.fetch_jobs(client, args, current_push, job)
                 retries = defaultdict(int)
-                for _job in jobs:
-                    _matrix_outcome_details = None
-                    _matrix_general_details = {}
-                    _test_details = []
-                    _pull_request = None
+
+                for current_job in jobs:
+
+                    matrix_outcome_details, pull_request = None, None
+                    matrix_general_details = {}
+                    test_details = []
 
                     # Fetch the log URL for the current job
-                    _log = client.get_client().get_job_log_url(
+                    current_job_log = ' '.join([str(_log_url['url']) for _log_url in client.get_client().get_job_log_url(
                         project=args.project,
-                        job_id=_job['id']
-                    )
-                    _log = ' '.join([str(_log_url['url']) for _log_url in _log])
+                        job_id=current_job['id']
+                    )])
 
-                    if _job['retry_id'] < retries[_job['task_id']]:
-                        print(f"Skipping {_job['task_id']} run: {_job['retry_id']} because there is a newer run of it.")
+                    if current_job['retry_id'] < retries[current_job['task_id']]:
+                        print(f"Skipping {current_job['task_id']} run: {current_job['retry_id']} because there is a newer run of it.")
                         continue
 
-                    retries[_job['task_id']] = _job['retry_id']
-                    # print(f"{_job['task_id']} run: {_job['retry_id']}")
+                    retries[current_job['task_id']] = current_job['retry_id']
+                    # print(f"{current_job['task_id']} run: {current_job['retry_id']}")
 
                     # TaskCluster
                     try:
@@ -150,46 +178,43 @@ class data_builder:
                             # Matrix (i.e, matrix_ids.json) generated from Flank
                             matrix_artifact = get_artifact(
                                 queue.artifact(
-                                    _job['task_id'],
-                                    _job['retry_id'],
+                                    current_job['task_id'],
+                                    current_job['retry_id'],
                                     client.global_configuration['artifacts']['matrix']
                                 )['url']
                             )
 
                             if matrix_artifact is not None:
                                 for value in matrix_artifact.values():
-                                    _matrix_general_details = {
+                                    matrix_general_details = {
                                         "webLink": value['webLink'],
                                         "gcsPath": value['gcsPath'],
                                         "matrixId": value['matrixId'],
                                         "isRoboTest": value['isRoboTest'],
                                     }
-                                    _matrix_outcome_details = value['axes']
+                                    matrix_outcome_details = value['axes']
 
                             # Disabled tests (if requested) [TODO: append to dataset or output to file]
                             if args.disabled_tests:
                                 shard_artifact = get_artifact(
                                     queue.artifact(
-                                        _job['task_id'],
-                                        _job['retry_id'],
+                                        current_job['task_id'],
+                                        current_job['retry_id'],
                                         client.global_configuration['artifacts']['shards']
                                     )['url']
                                 )
 
                                 if shard_artifact is not None:
                                     for value in shard_artifact.values():
-                                        if (value['junit-ignored'] not in
-                                                disabled_tests):
-                                            disabled_tests.append(
-                                                value['junit-ignored'])
+                                        disabled_tests.update(value['junit-ignored'])
                             else:
                                 pass
 
                             # JUnitReport (i.e, FullJUnitReport.xml)
                             report_artifact = get_artifact(
                                 queue.artifact(
-                                    _job['task_id'],
-                                    _job['retry_id'],
+                                    current_job['task_id'],
+                                    current_job['retry_id'],
                                     client.global_configuration['artifacts']['report']
                                 )['url']
                             )
@@ -198,11 +223,11 @@ class data_builder:
                             if report_artifact is not None:
                                 for suite in report_artifact:  # pylint: disable=not-an-iterable
                                     cur_suite = _TestSuite.fromelem(suite)
-                                    if cur_suite.flakes != '0':
+                                    if cur_suite.flakes != '0':  # non-zero if there are flakes
                                         for case in suite:
-                                            # Should I check for flaky=true?
+                                            # Should I check for flaky=true? Requires extending Testcase class
                                             if case.result:
-                                                _test_details.append({
+                                                test_details.append({
                                                     'name': case.name,
                                                     'result': 'flaky',
                                                     'details': case.result[0].text
@@ -211,7 +236,7 @@ class data_builder:
                                         for case in suite:
                                             for entry in case.result:
                                                 if isinstance(entry, Failure):
-                                                    _test_details.append({
+                                                    test_details.append({
                                                         'name': case.name,
                                                         'result': 'failure',
                                                         'details': entry.text
@@ -219,11 +244,11 @@ class data_builder:
                                                 break
                                 # For Robo Tests, as of now, there are no artifacts exposing details
                                 # about the outcome (e.g, crash details), so we have to write a custom outcome
-                                if _matrix_general_details['isRoboTest'] is True:
-                                    if _matrix_outcome_details is not None:
-                                        for axis in _matrix_outcome_details:
+                                if matrix_general_details['isRoboTest'] is True:
+                                    if matrix_outcome_details is not None:
+                                        for axis in matrix_outcome_details:
                                             if axis['outcome'] == 'failure':
-                                                _test_details.append({
+                                                test_details.append({
                                                     'name': axis['device'],
                                                     'result': 'failure',
                                                     'details': axis['details']
@@ -233,49 +258,41 @@ class data_builder:
 
                     except TaskclusterRestFailure:
                         # Abort iteration on current job, continue to next job
-                        print(f"Artifact(s) not available for {_job['task_id']}")
+                        print(f"Artifact(s) not available for {current_job['task_id']}")
                         continue
 
-                    # Github (pull request data)
-                    repo = github.get_repo(
-                        urlparse(queue.task(_job['task_id'])['payload']['env']['MOBILE_HEAD_REPOSITORY']).path.strip("/")
-                    )
-                    commit = repo.get_commit(
-                        queue.task(_job['task_id'])['payload']['env']['MOBILE_HEAD_REV']
-                    )
-                    pulls = commit.get_pulls()
-
-                    _pull_request = pulls[0] if pulls is not None and pulls.totalCount > 0 else None
+                    # Github (i.e, commit details)
+                    pull_request, commit = self.fetch_github(current_job, queue)
 
                     # Stitch together dataset from TaskCluster and Github results
-                    dt_obj_start = datetime.fromtimestamp(_job['start_timestamp'])
-                    dt_obj_end = datetime.fromtimestamp(_job['end_timestamp'])
+                    dt_obj_start = datetime.fromtimestamp(current_job['start_timestamp'])
+                    dt_obj_end = datetime.fromtimestamp(current_job['end_timestamp'])
 
                     durations.append(
                         (dt_obj_end - dt_obj_start).total_seconds() / 60)
-                    outcomes.append(_job)
+                    outcomes.append(current_job)
                     dataset.append({
-                        'push_id': _push['id'],
-                        'task_id': _job['task_id'],
+                        'push_id': current_push['id'],
+                        'task_id': current_job['task_id'],
                         'duration': '{0:.0f}'.format(
                             (dt_obj_end - dt_obj_start).total_seconds() / 60
                         ),
-                        'author': _job['who'],
-                        'result': _job['result'],
+                        'author': current_job['who'],
+                        'result': current_job['result'],
                         'task_html_url': '{0}'.format(''.join(
                             [client.global_configuration['taskcluster']['host'], '/tasks/',
-                                _job['task_id']]
+                                current_job['task_id']]
                         )),
-                        'last_modified': _job['last_modified'],
-                        'task_log': _log,
-                        'matrix_general_details': _matrix_general_details,
-                        'matrix_outcome_details': _matrix_outcome_details,
+                        'last_modified': current_job['last_modified'],
+                        'task_log': current_job_log,
+                        'matrix_general_details': matrix_general_details,
+                        'matrix_outcome_details': matrix_outcome_details,
                         'revision': commit.sha,
-                        'pullreq_html_url': _pull_request.html_url
-                        if _pull_request else commit.commit.html_url,
-                        'pullreq_html_title': _pull_request.title
-                        if _pull_request else commit.commit.message,
-                        'problem_test_details': _test_details
+                        'pullreq_html_url': pull_request.html_url
+                        if pull_request else commit.commit.html_url,
+                        'pullreq_html_title': pull_request.title
+                        if pull_request else commit.commit.message,
+                        'problem_test_details': test_details
                     })
 
                     logger.info(
@@ -283,26 +300,26 @@ class data_builder:
                         '{3}/tasks/{4} - {5} - {6} - [{7}] - '
                         '[{8}] - {9} - {10} - {11} - {12} - {13} - {14}'.format(
                             (dt_obj_end - dt_obj_start).total_seconds() / 60,
-                            _job['who'],
-                            _job['result'],
+                            current_job['who'],
+                            current_job['result'],
                             client.global_configuration['taskcluster']['host'],
-                            _job['task_id'],
-                            _job['last_modified'],
-                            _log,
+                            current_job['task_id'],
+                            current_job['last_modified'],
+                            current_job_log,
                             ', '.join(map(str, [x['details'] for x in
-                                                _matrix_outcome_details]))
-                            if _matrix_outcome_details else None,
+                                                matrix_outcome_details]))
+                            if matrix_outcome_details else None,
                             ', '.join(map(str, [x['outcome'] for x in
-                                                _matrix_outcome_details]))
-                            if _matrix_outcome_details else None,
-                            _matrix_general_details['webLink'],
-                            _matrix_general_details['matrixId'],
+                                                matrix_outcome_details]))
+                            if matrix_outcome_details else None,
+                            matrix_general_details['webLink'],
+                            matrix_general_details['matrixId'],
                             commit.sha,
-                            _test_details,
-                            _pull_request.html_url if
-                            _pull_request else commit.commit.html_url,
-                            _pull_request.title if
-                            _pull_request else commit.commit.message,
+                            test_details,
+                            pull_request.html_url if
+                            pull_request else commit.commit.html_url,
+                            pull_request.title if
+                            pull_request else commit.commit.message,
                         )
                     )
 

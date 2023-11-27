@@ -25,7 +25,13 @@ def parse_args():
     import argparse
     parser = argparse.ArgumentParser(
         description="Supply a INI configuration file to "
-                    "fetch data from Treeherder, Github, and Taskcluster"
+                    "fetch data from Treeherder, Github, and Taskcluster "
+                    "and build a sharable JSON dataset "
+                    "for the Mozilla Mobile Test Engineering team "
+                    "to use for analysis and reporting. "
+                    "See README.md for more information. "
+                    "Example: python client.py --project firefox-android",
+        epilog="Note: This script requires a GITHUB_TOKEN environment variable to be set (optional: SLACK_WEBHOOK)."
     )
     parser.add_argument(
         "--project",

@@ -39,8 +39,10 @@ def is_valid_url(url):
 
 
 def parse_args(cmdln_args):
+    '''Parse command line arguments'''
     parser = argparse.ArgumentParser(
-        description='Posts generated HTML report to Slack'
+        description='Posts generated HTML report to Slack',
+        epilog="Note: This script requires a Slack webhook set: SLACK_WEBHOOK)."
     )
 
     group = parser.add_mutually_exclusive_group(required=True)
@@ -61,6 +63,7 @@ def parse_args(cmdln_args):
 
 
 def post_to_slack(data):
+    '''Post data to Slack'''
     webhook_url = os.environ.get('SLACK_WEBHOOK')
 
     try:

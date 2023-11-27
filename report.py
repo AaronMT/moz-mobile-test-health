@@ -48,7 +48,12 @@ def search_bugs(test_name):
         "summary": test_name,
         "status": ["UNCONFIRMED", "NEW", "ASSIGNED", "REOPENED"]
     }
-    response = session.get(url, params=params)
+
+    try:
+        response = session.get(url, params=params)
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred while searching for bugs: {e}")
+        return None
 
     if response.status_code != 200:
         return None
@@ -271,7 +276,7 @@ def main():
 
                 if content:
                     content = sorted(content, key=lambda x: x[0])
-                    [x.__delitem__(0) for x in content]          
+                    [x.__delitem__(0) for x in content]
                     content = [item for sublist in content for item in sublist]
                     p = generate_report(
                         f"{section['summary']['project']}  {next(iter(section))}",
