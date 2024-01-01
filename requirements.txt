@@ -11,7 +11,7 @@ Deprecated==1.2.14
 frozenlist==1.4.1
 future==0.18.3
 idna==3.6
-junitparser==3.1.0
+junitparser==3.1.1
 mohawk==1.1.0
 multidict==6.0.4
 packaging==23.2
