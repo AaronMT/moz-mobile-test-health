@@ -121,6 +121,16 @@ class data_builder:
 
         return pull_request, commit
 
+    def fetch_hg(self, current_job, queue):
+        """Fetch Mercurial data."""
+        # task_payload = queue.task(current_job['task_id'])['payload']
+        pass
+
+    def fetch_phabricator(self, current_job, queue):
+        """Fetch Phabricator data."""
+        # task_payload = queue.task(current_job['task_id'])['payload']
+        pass
+
     def build_complete_dataset(self, args):
         """Build the complete dataset."""
         from collections import defaultdict
@@ -264,6 +274,8 @@ class data_builder:
                     # Github (i.e, commit details)
                     pull_request, commit = self.fetch_github(current_job, queue)
 
+                    # Mercurial (i.e, commit details)
+
                     # Stitch together dataset from TaskCluster and Github results
                     dt_obj_start = datetime.fromtimestamp(current_job['start_timestamp'])
                     dt_obj_end = datetime.fromtimestamp(current_job['end_timestamp'])
@@ -287,11 +299,11 @@ class data_builder:
                         'task_log': current_job_log,
                         'matrix_general_details': matrix_general_details,
                         'matrix_outcome_details': matrix_outcome_details,
-                        'revision': commit.sha,
+                        'revision': commit.sha if commit else None,
                         'pullreq_html_url': pull_request.html_url
-                        if pull_request else commit.commit.html_url,
+                        if pull_request else commit.commit.html_url if commit else None,
                         'pullreq_html_title': pull_request.title
-                        if pull_request else commit.commit.message,
+                        if pull_request else commit.commit.message if commit else None,
                         'problem_test_details': test_details
                     })
 
@@ -314,12 +326,12 @@ class data_builder:
                             if matrix_outcome_details else None,
                             matrix_general_details['webLink'],
                             matrix_general_details['matrixId'],
-                            commit.sha,
+                            commit.sha if commit else None,
                             test_details,
                             pull_request.html_url if
-                            pull_request else commit.commit.html_url,
+                            pull_request else commit.commit.html_url if commit else None,
                             pull_request.title if
-                            pull_request else commit.commit.message,
+                            pull_request else commit.commit.message if commit else None,
                         )
                     )
 

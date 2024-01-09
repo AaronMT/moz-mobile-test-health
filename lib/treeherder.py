@@ -28,7 +28,7 @@ class Treeherder:
 
     def create_client(self):
         return TreeherderClient(
-            server_url=self.config['production']['host']
+            server_url=self.config['treeherder']['host']
         )
 
     def get_client(self):
