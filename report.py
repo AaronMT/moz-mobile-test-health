@@ -86,9 +86,13 @@ def generate_html(test_object):
     match test_object["task"]:
         case _:
             task_badge = "https://img.shields.io/badge/-task-lightblue"
-    match test_object["source"]:
-        case _:
-            source_badge = "https://img.shields.io/badge/Github-Pull%20Request-lightgrey"
+
+    if "github" in test_object["source"].lower():
+        source_badge = "https://img.shields.io/badge/Github-Pull%20Request-lightgrey"
+    elif "hg.mozilla.org" in test_object["source"]:
+        source_badge = "https://img.shields.io/badge/Mozilla-Central-orange"
+    else:
+        source_badge = "https://img.shields.io/badge/-unknown-lightgrey"
 
     bugs = search_bugs(test_object['testName'])
 
@@ -228,7 +232,7 @@ def generate_report(section, test_objects):
                             <th>Test Name</th>
                             <th><img src="https://www.gstatic.com/mobilesdk/160503_mobilesdk/logo/favicon.ico"></th>
                             <th><img src="https://media.taskcluster.net/favicons/faviconLogo.png"></th>
-                            <th><img src="https://github.com/favicon.ico"></th>
+                            <th><img src="https://img.shields.io/badge/Code%20Repository-blue"></th>
                         </tr>
                     </thead>
                     <tbody>

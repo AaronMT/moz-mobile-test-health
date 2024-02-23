@@ -111,25 +111,43 @@ class data_builder:
         """Fetch Github data."""
         from urllib.parse import urlparse
 
-        task_payload = queue.task(current_job['task_id'])['payload']
-        repo = self.github.get_repo(
-            urlparse(task_payload['env']['MOBILE_HEAD_REPOSITORY']).path.strip("/")
-        )
-        commit = repo.get_commit(task_payload['env']['MOBILE_HEAD_REV'])
-        pulls = commit.get_pulls()
-        pull_request = pulls[0] if pulls is not None and pulls.totalCount > 0 else None
+        try:
+            task_payload = queue.task(current_job['task_id'])['payload']
+            repo = self.github.get_repo(
+                urlparse(task_payload['env']['MOBILE_HEAD_REPOSITORY']).path.strip("/")
+            )
+            commit = repo.get_commit(task_payload['env']['MOBILE_HEAD_REV'])
+            pulls = commit.get_pulls()
+            pull_request = pulls[0] if pulls is not None and pulls.totalCount > 0 else None
+        except KeyError:
+            print(f"Error fetching Github data for {current_job['task_id']}")
+            pull_request, commit = None, None
 
         return pull_request, commit
 
     def fetch_hg(self, current_job, queue):
         """Fetch Mercurial data."""
-        # task_payload = queue.task(current_job['task_id'])['payload']
-        pass
+        from urllib.parse import urlparse
+
+        try:
+            task_payload = queue.task(current_job['task_id'])['payload']
+            repo = urlparse(task_payload['env']['GECKO_HEAD_REPOSITORY'])
+            commit = task_payload['env']['GECKO_HEAD_REV']
+        except KeyError:
+            print(f"Error fetching Mercurial data for {current_job['task_id']}")
+            repo, commit = None, None
+
+        return repo, commit
 
     def fetch_phabricator(self, current_job, queue):
         """Fetch Phabricator data."""
-        # task_payload = queue.task(current_job['task_id'])['payload']
         pass
+
+    def fetch_comments_for_revision(self, current_push, commit):
+        """Fetch comments for a matching revision."""
+        for revision in current_push['revisions']:
+            if revision['revision'] == commit:
+                return revision['comments']
 
     def build_complete_dataset(self, args):
         """Build the complete dataset."""
@@ -271,10 +289,15 @@ class data_builder:
                         print(f"Artifact(s) not available for {current_job['task_id']}")
                         continue
 
-                    # Github (i.e, commit details)
-                    pull_request, commit = self.fetch_github(current_job, queue)
-
+                    # Fetch Github or Mercurial associative data from the TaskCluster task
                     # Mercurial (i.e, commit details)
+                    hg_projects = [project.strip() for project in client.global_configuration['hg']['projects'].split(',')]
+
+                    if args.project in hg_projects:
+                        repo, commit = self.fetch_hg(current_job, queue)
+                    else:
+                        # Github (i.e, pull request details)
+                        pull_request, commit = self.fetch_github(current_job, queue)
 
                     # Stitch together dataset from TaskCluster and Github results
                     dt_obj_start = datetime.fromtimestamp(current_job['start_timestamp'])
@@ -299,11 +322,9 @@ class data_builder:
                         'task_log': current_job_log,
                         'matrix_general_details': matrix_general_details,
                         'matrix_outcome_details': matrix_outcome_details,
-                        'revision': commit.sha if commit else None,
-                        'pullreq_html_url': pull_request.html_url
-                        if pull_request else commit.commit.html_url if commit else None,
-                        'pullreq_html_title': pull_request.title
-                        if pull_request else commit.commit.message if commit else None,
+                        'revision': getattr(commit, 'sha', commit) if commit else None,
+                        'pullreq_html_url': pull_request.html_url if pull_request else getattr(commit, 'html_url', None) if hasattr(commit, 'commit') else f"{repo.scheme}://{repo.netloc}/{repo.path}/rev/{commit}" if repo else None,
+                        'pullreq_html_title': pull_request.title if pull_request else getattr(getattr(commit, 'commit', None), 'message', self.fetch_comments_for_revision(current_push, commit)) if commit else None,
                         'problem_test_details': test_details
                     })
 
@@ -326,12 +347,10 @@ class data_builder:
                             if matrix_outcome_details else None,
                             matrix_general_details['webLink'],
                             matrix_general_details['matrixId'],
-                            commit.sha if commit else None,
+                            getattr(commit, 'sha', commit) if commit else None,
                             test_details,
-                            pull_request.html_url if
-                            pull_request else commit.commit.html_url if commit else None,
-                            pull_request.title if
-                            pull_request else commit.commit.message if commit else None,
+                            pull_request.html_url if pull_request else getattr(commit, 'html_url', None) if hasattr(commit, 'commit') else f"{repo.scheme}://{repo.netloc}/{repo.path}/rev/{commit}" if repo else None,
+                            pull_request.title if pull_request else getattr(getattr(commit, 'commit', None), 'message', self.fetch_comments_for_revision(current_push, commit)) if commit else None
                         )
                     )
 
