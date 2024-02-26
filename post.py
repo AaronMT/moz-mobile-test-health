@@ -99,7 +99,7 @@ def main():
                             "text": "Daily {} {} {}: {} w/ {}"
                             .format(
                                 section['summary']['project'],
-                                get_slack_emoji(section['summary']['repo']),
+                                get_slack_emoji(section['summary']['project']),
                                 section['summary']['job_symbol'],
                                 get_slack_emoji(section['summary']['job_result']),
                                 get_header_result_text(section['summary']['job_result'])
@@ -133,16 +133,10 @@ def main():
                                     "text": {
                                         "type": "mrkdwn",
                                         "text":
-                                        "*{}* [#<{}|{}>] [<{}|task log>]"
+                                        "`{}` {} <{}|:taskcluster-new:>"
                                         .format(
                                             test['name'],
-                                            problem['pullreq_html_url']
-                                            if problem['pullreq_html_url']
-                                            is not None else "",
-                                            problem['pullreq_html_url']
-                                            .rsplit('/', 1)[-1]
-                                            if problem['pullreq_html_url']
-                                            is not None else "",
+                                            "<{}|:code:>".format(problem['pullreq_html_url']) if problem['pullreq_html_url'] else "[]",
                                             problem['task_log']
                                         )
                                     },
