@@ -92,7 +92,7 @@ def main():
         'Reference Browser': ':refbrowser:',
     }
 
-    slackmoji = slackmoji_map.get(report_name, ":browser:")
+    slackmoji = slackmoji_map.get(report_name, ":firefox:")
 
     header = [
         {
