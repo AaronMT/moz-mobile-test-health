@@ -120,7 +120,7 @@ class data_builder:
             pulls = commit.get_pulls()
             pull_request = pulls[0] if pulls is not None and pulls.totalCount > 0 else None
         except KeyError:
-            print(f"Error fetching Github data for {current_job['task_id']}")
+            logger.error(f"Error fetching Github data for {current_job['task_id']}")
             pull_request, commit = None, None
 
         return pull_request, commit
@@ -134,7 +134,16 @@ class data_builder:
             repo = urlparse(task_payload['env']['GECKO_HEAD_REPOSITORY'])
             commit = task_payload['env']['GECKO_HEAD_REV']
         except KeyError:
-            print(f"Error fetching Mercurial data for {current_job['task_id']}")
+            logger.error(f"Error fetching Mercurial data for {current_job['task_id']}: Key not found.")
+            repo, commit = None, None
+        except TypeError:
+            logger.error(f"Error fetching Mercurial data for {current_job['task_id']}: Unexpected data type.")
+            repo, commit = None, None
+        except AttributeError:
+            logger.error(f"Error fetching Mercurial data for {current_job['task_id']}: Missing attribute.")
+            repo, commit = None, None
+        except ValueError:
+            logger.error(f"Error fetching Mercurial data for {current_job['task_id']}: Invalid task ID.")
             repo, commit = None, None
 
         return repo, commit
@@ -388,6 +397,6 @@ class data_builder:
                     json.dump(results, outfile, indent=4)
                     print(f'Output written to [{outfile.name}] \n')
             except OSError as err:
-                raise SystemExit(err) from err
+                raise SystemExit(f"Error: Failed to write output to file. {err}") from err
         else:
             print('No results found with provided project config.', end='\n\n')
