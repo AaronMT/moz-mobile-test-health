@@ -13,6 +13,7 @@ import argparse
 import json
 import logging
 import os
+import re
 import sys
 
 import requests
@@ -88,6 +89,9 @@ def main():
         with open(args.input, encoding='utf-8') as data_file:
             dataset = json.load(data_file)
 
+            pattern = r"Bug (\d+)"
+            bz_base_url = "https://bugzil.la/"
+
             for section in dataset:
                 content, header, footer = ([] for _ in range(3))
                 divider = [{"type": "divider"}]
@@ -126,6 +130,12 @@ def main():
                 for problem in job:
                     if problem['problem_test_details']:
                         for test in problem['problem_test_details']:
+                            try:
+                                bug_number = re.findall(pattern, problem['pullreq_html_title'])[0]
+                                bug_link = f"<{bz_base_url}{bug_number}|Bug>"
+                            except IndexError:
+                                bug_link = "No Bug"
+
                             content.append([
                                 test['name'],
                                 {
@@ -133,12 +143,7 @@ def main():
                                     "text": {
                                         "type": "mrkdwn",
                                         "text":
-                                        "`{}` {} <{}|:taskcluster-new:>"
-                                        .format(
-                                            test['name'],
-                                            "<{}|:code:>".format(problem['pullreq_html_url']) if problem['pullreq_html_url'] else "[]",
-                                            problem['task_log']
-                                        )
+                                        f"`{test['name']}`"
                                     },
                                     "accessory": {
                                         "type": "button",
@@ -155,6 +160,35 @@ def main():
                                         ['webLink'],
                                         "action_id": "button-action"
                                     }
+                                },
+                                {
+                                    "type": "context",
+                                    "elements": [
+                                        {
+                                            "type": "mrkdwn",
+                                            "text": f"<{problem['pullreq_html_url']}|Commit>"
+                                        },
+                                        {
+                                            "type": "mrkdwn",
+                                            "text": f"<{problem['task_log']}|Task Log>"
+                                        },
+                                        {
+                                            "type": "mrkdwn",
+                                            "text": f"<{problem['pushlog']}|Push Log>"
+                                        },
+                                        {
+                                            "type": "mrkdwn",
+                                            "text": f"{bug_link}"
+                                        },
+                                        {
+                                            "type": "plain_text",
+                                            "text": f"{problem['revision'][:5]}"
+                                        },
+                                        {
+                                            "type": "plain_text",
+                                            "text": f"{problem['matrix_general_details']['matrixId']}"
+                                        }
+                                    ]
                                 }
                             ])
                 if content:

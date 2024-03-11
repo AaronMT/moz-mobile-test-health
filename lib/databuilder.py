@@ -158,6 +158,9 @@ class data_builder:
             if revision['revision'] == commit:
                 return revision['comments']
 
+    def construct_pushlog(self, client, project, commit):
+        return f"{client.global_configuration['treeherder']['host']}/jobs?repo={project}&revision={getattr(commit, 'sha', commit) if commit else commit}"
+
     def build_complete_dataset(self, args):
         """Build the complete dataset."""
         from collections import defaultdict
@@ -334,13 +337,14 @@ class data_builder:
                         'revision': getattr(commit, 'sha', commit) if commit else None,
                         'pullreq_html_url': pull_request.html_url if pull_request else getattr(commit, 'html_url', None) if hasattr(commit, 'commit') else f"{repo.scheme}://{repo.netloc}/{repo.path}/rev/{commit}" if repo else None,
                         'pullreq_html_title': pull_request.title if pull_request else getattr(getattr(commit, 'commit', None), 'message', self.fetch_comments_for_revision(current_push, commit)) if commit else None,
-                        'problem_test_details': test_details
+                        'problem_test_details': test_details,
+                        'pushlog': self.construct_pushlog(client, args.project, commit)
                     })
 
                     logger.info(
                         'Duration: {0:.0f} min {1} - {2} - '
                         '{3}/tasks/{4} - {5} - {6} - [{7}] - '
-                        '[{8}] - {9} - {10} - {11} - {12} - {13} - {14}'.format(
+                        '[{8}] - {9} - {10} - {11} - {12} - {13} - {14} - {15}'.format(
                             (dt_obj_end - dt_obj_start).total_seconds() / 60,
                             current_job['who'],
                             current_job['result'],
@@ -359,7 +363,8 @@ class data_builder:
                             getattr(commit, 'sha', commit) if commit else None,
                             test_details,
                             pull_request.html_url if pull_request else getattr(commit, 'html_url', None) if hasattr(commit, 'commit') else f"{repo.scheme}://{repo.netloc}/{repo.path}/rev/{commit}" if repo else None,
-                            pull_request.title if pull_request else getattr(getattr(commit, 'commit', None), 'message', self.fetch_comments_for_revision(current_push, commit)) if commit else None
+                            pull_request.title if pull_request else getattr(getattr(commit, 'commit', None), 'message', self.fetch_comments_for_revision(current_push, commit)) if commit else None,
+                            self.construct_pushlog(client, args.project, getattr(commit, 'sha', commit) if commit else None)
                         )
                     )
 
