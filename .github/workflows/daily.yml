@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.11.0]
-        configuration: [firefox-android, reference-browser]
+        configuration: [mozilla-central, mozilla-beta, reference-browser]
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}

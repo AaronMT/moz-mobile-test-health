@@ -196,7 +196,14 @@ def main():
                     [x.__delitem__(0) for x in content]
                     content = [item for sublist in content for item in sublist]
 
-                    post_to_slack({'blocks': header + divider + content + divider + footer, 'text': "no-use"})
+                    # Chunk messages into groups of 46 to avoid Slack API limits
+                    # 50 is the max number of blocks allowed in a message, and 46 is the max number of blocks
+                    # as we are using 4 blocks for header, dividers and a footer
+                    chunks = [content[i:i + 46] for i in range(0, len(content), 46)]
+                    for chunk in chunks:
+                        post_to_slack({'blocks': header + divider + chunk + divider + footer, 'text': "no-use"})
+
+                    #post_to_slack({'blocks': header + divider + content + divider + footer, 'text': "no-use"})
 
                     print(f"Slack message posted for [{section['summary']['job_symbol']}] "
                           f"with results [{section['summary']['job_result']}] ({section['summary']['project']})")
