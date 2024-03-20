@@ -187,6 +187,10 @@ def main():
                                         {
                                             "type": "plain_text",
                                             "text": f"{problem['matrix_general_details']['matrixId']}"
+                                        },
+                                        {
+                                            "type": "plain_text",
+                                            "text": f"{section['summary']['repo']}"
                                         }
                                     ]
                                 }
