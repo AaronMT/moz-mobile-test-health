@@ -7,7 +7,7 @@ build==1.2.1
 certifi==2024.2.2
 cffi==1.16.0
 charset-normalizer==3.3.2
-cryptography==42.0.5
+cryptography==42.0.7
 Deprecated==1.2.14
 frozenlist==1.4.1
 future==1.0.0
