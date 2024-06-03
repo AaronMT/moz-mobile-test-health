@@ -30,7 +30,8 @@ from datetime import datetime
 from statistics import mean
 
 from github import Github
-from junitparser import Attr, Failure, JUnitXml, JUnitXmlError, TestSuite
+from junitparser import (Attr, Failure, JUnitXml, JUnitXmlError, TestCase,
+                         TestSuite)
 from taskcluster import Queue
 from taskcluster.exceptions import TaskclusterRestFailure
 
@@ -83,6 +84,11 @@ def get_artifact(url, params=None):
 class _TestSuite(TestSuite):
     '''Extend TestSuite class to add flakes attribute.'''
     flakes = Attr()
+
+
+class _TestCase(TestCase):
+    '''Extend Testcase class to add flaky attribute.'''
+    flaky = Attr()
 
 
 class data_builder:
@@ -263,25 +269,24 @@ class data_builder:
                             if report_artifact is not None:
                                 for suite in report_artifact:  # pylint: disable=not-an-iterable
                                     cur_suite = _TestSuite.fromelem(suite)
-                                    if cur_suite.flakes != '0':  # non-zero if there are flakes
-                                        for case in suite:
-                                            # Should I check for flaky=true? Requires extending Testcase class
-                                            if case.result:
-                                                test_details.append({
-                                                    'name': case.name,
-                                                    'result': 'flaky',
-                                                    'details': case.result[0].text
-                                                })
-                                    else:
-                                        for case in suite:
+                                    for case in cur_suite:
+                                        case = _TestCase.fromelem(case)
+                                        if case.result:
                                             for entry in case.result:
                                                 if isinstance(entry, Failure):
-                                                    test_details.append({
-                                                        'name': case.name,
-                                                        'result': 'failure',
-                                                        'details': entry.text
-                                                    })
-                                                break
+                                                    result_type = (
+                                                        "flaky"
+                                                        if getattr(case, "flaky", "false") == "true"
+                                                        else "failure"
+                                                    )
+                                                    test_details.append(
+                                                        {
+                                                            "name": case.name,
+                                                            "result": result_type,
+                                                            "details": entry.text,
+                                                        }
+                                                    )
+
                                 # For Robo Tests, as of now, there are no artifacts exposing details
                                 # about the outcome (e.g, crash details), so we have to write a custom outcome
                                 if matrix_general_details['isRoboTest'] is True:
