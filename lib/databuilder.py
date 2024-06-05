@@ -267,6 +267,9 @@ class data_builder:
 
                             # Extract the test details from the FullJUnitReport
                             if report_artifact is not None:
+                                # Dictionary to store the last seen failure details for each test case
+                                last_seen_failures = {}
+
                                 for suite in report_artifact:  # pylint: disable=not-an-iterable
                                     cur_suite = _TestSuite.fromelem(suite)
                                     for case in cur_suite:
@@ -279,6 +282,8 @@ class data_builder:
                                                         if getattr(case, "flaky", "false") == "true"
                                                         else "failure"
                                                     )
+                                                test_id = "%s#%s" % (case.classname, case.name)
+                                                if entry.text != last_seen_failures.get(test_id, ""):
                                                     test_details.append(
                                                         {
                                                             "name": case.name,
@@ -286,6 +291,7 @@ class data_builder:
                                                             "details": entry.text,
                                                         }
                                                     )
+                                                last_seen_failures[test_id] = entry.text
 
                                 # For Robo Tests, as of now, there are no artifacts exposing details
                                 # about the outcome (e.g, crash details), so we have to write a custom outcome
