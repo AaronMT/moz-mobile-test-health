@@ -15,7 +15,7 @@ idna==3.7
 junitparser==3.1.2
 mohawk==1.1.0
 multidict==6.0.5
-packaging==24.0
+packaging==24.1
 pycparser==2.22
 PyGithub==2.3.0
 PyJWT==2.8.0
