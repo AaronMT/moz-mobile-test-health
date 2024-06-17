@@ -1,3 +1,5 @@
+[![Daily UI Test (Intermittent/Failure) Report](https://github.com/AaronMT/moz-mobile-test-health/actions/workflows/daily.yml/badge.svg)](https://github.com/AaronMT/moz-mobile-test-health/actions/workflows/daily.yml)
+
 # moz-mobile-test-health
 ## About
 
@@ -75,7 +77,3 @@ Slack message posted for [ui-samples-browser.success] results
 No failures or intermittents in (job.ui-components.success) in [ui-components]. No Slack message posted.
 No failures or intermittents in (job.ui-samples-glean.success) in [ui-samples-glean]. No Slack message posted.
 ```
-
-## TODO
-
-- [🌟] Consolidate project configuration sections into a list using ConfigParser converters
