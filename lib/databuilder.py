@@ -218,7 +218,7 @@ class data_builder:
                     # TaskCluster
                     try:
                         # Dependent on public artifact visibility
-                        if (re.compile("^(ui-|robo|legacy){1}.*")).search(
+                        if (re.compile("^(ui-|robo|legacy|experimental){1}.*")).search(
                             client.project_configuration[job]['symbol']
                         ):
                             # Matrix (i.e, matrix_ids.json) generated from Flank
