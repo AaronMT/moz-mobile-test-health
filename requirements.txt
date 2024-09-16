@@ -11,7 +11,7 @@ cryptography==43.0.0
 Deprecated==1.2.14
 frozenlist==1.4.1
 future==1.0.0
-idna==3.7
+idna==3.10
 junitparser==3.1.2
 mohawk==1.1.0
 multidict==6.0.5
