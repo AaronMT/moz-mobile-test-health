@@ -31,4 +31,4 @@ treeherder-client==5.0.0
 typing_extensions==4.12.2
 urllib3==2.2.2
 wrapt==1.16.0
-yarl==1.9.4
+yarl==1.15.5
