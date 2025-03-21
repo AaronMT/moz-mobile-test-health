@@ -55,7 +55,7 @@ jobs:
         continue-on-error: true
         env:
           HTML_FILE: ${{ steps.date.outputs.date }}_${{ matrix.configuration }}.html
-      - uses: google-github-actions/auth@v2.1.7
+      - uses: google-github-actions/auth@v2.1.8
         name: Authenticate Google Cloud
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
