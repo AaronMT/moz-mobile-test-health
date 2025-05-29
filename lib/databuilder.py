@@ -31,7 +31,7 @@ from statistics import mean
 
 from github import Github
 from junitparser import (Attr, Failure, JUnitXml, JUnitXmlError, TestCase,
-                         TestSuite)
+                         TestSuite, Skipped)
 from taskcluster import Queue
 from taskcluster.exceptions import TaskclusterRestFailure
 
@@ -274,24 +274,29 @@ class data_builder:
                                     cur_suite = _TestSuite.fromelem(suite)
                                     for case in cur_suite:
                                         case = _TestCase.fromelem(case)
+                                        
+                                        result_type = None
+                                        
                                         if case.result:
                                             for entry in case.result:
+                                                if isinstance(entry, Skipped):
+                                                    continue  # ignore skipped tests
                                                 if isinstance(entry, Failure):
                                                     result_type = (
                                                         "flaky"
                                                         if getattr(case, "flaky", "false") == "true"
                                                         else "failure"
                                                     )
-                                                test_id = "%s#%s" % (case.classname, case.name)
-                                                if entry.text != last_seen_failures.get(test_id, ""):
-                                                    test_details.append(
-                                                        {
-                                                            "name": case.name,
-                                                            "result": result_type,
-                                                            "details": entry.text,
-                                                        }
-                                                    )
-                                                last_seen_failures[test_id] = entry.text
+                                                    test_id = "%s#%s" % (case.classname, case.name)
+                                                    if entry.text != last_seen_failures.get(test_id, ""):
+                                                        test_details.append(
+                                                            {
+                                                                "name": case.name,
+                                                                "result": result_type,
+                                                                "details": entry.text,
+                                                            }
+                                                        )
+                                                    last_seen_failures[test_id] = entry.text
 
                                 # For Robo Tests, as of now, there are no artifacts exposing details
                                 # about the outcome (e.g, crash details), so we have to write a custom outcome
