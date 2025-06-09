@@ -9,7 +9,7 @@ cffi==1.17.1
 charset-normalizer==3.4.2
 cryptography==45.0.3
 Deprecated==1.2.18
-frozenlist==1.6.0
+frozenlist==1.6.2
 future==1.0.0
 idna==3.10
 junitparser==3.2.0
