@@ -4,7 +4,7 @@ async-timeout==5.0.1
 attrs==25.3.0
 bpyutils==0.5.8
 build==1.2.2.post1
-certifi==2025.6.15
+certifi==2025.8.3
 cffi==1.17.1
 charset-normalizer==3.4.2
 cryptography==45.0.4
