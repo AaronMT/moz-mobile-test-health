@@ -15,7 +15,7 @@ jobs:
         python-version: [3.11.0]
         configuration: [mozilla-central, mozilla-beta, autoland, mozilla-release, reference-browser]
     steps:
-      - uses: actions/checkout@v4.1.4
+      - uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
