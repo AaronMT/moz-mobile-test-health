@@ -29,6 +29,6 @@ taskcluster==93.0.0
 taskcluster-urls==13.0.1
 treeherder-client==5.0.0
 typing_extensions==4.15.0
-urllib3==2.6.3
+urllib3==2.8.0
 wrapt==2.5.0
 yarl==1.22.0
